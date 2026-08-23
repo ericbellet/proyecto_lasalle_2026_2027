@@ -1,0 +1,308 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+ * Design tokens.
+ *
+ * Dark is the primary theme: this is a research terminal, and dense numeric
+ * tables read better on a dark surface. Light is a full peer, defined by
+ * overriding the same variables on [data-theme="light"].
+ *
+ * Colour carries meaning here and nothing else:
+ *   positive/negative  → realized return, alpha
+ *   accent             → probability and other neutral information
+ *   metal              → the current leader, used once per screen at most
+ * ------------------------------------------------------------------------ */
+
+@theme {
+  --color-bg: #07080c;
+  --color-bg-elevated: #0c0e14;
+  --color-surface: #11141c;
+  --color-surface-hover: #171b25;
+  --color-border: #1e2330;
+  --color-border-strong: #2b3242;
+
+  --color-fg: #e8ecf4;
+  --color-fg-muted: #949db4;
+  --color-fg-subtle: #626b80;
+
+  --color-accent: #7c6bff;
+  --color-accent-soft: #241f4d;
+  --color-accent-fg: #b9b0ff;
+
+  --color-cyan: #35d6e5;
+  --color-cyan-soft: #0d3138;
+
+  --color-positive: #2fd98a;
+  --color-positive-soft: #0d3325;
+  --color-negative: #ff5f6d;
+  --color-negative-soft: #3a141b;
+  --color-warning: #f5b544;
+  --color-warning-soft: #35270d;
+
+  --color-metal: #e8c468;
+  --color-metal-deep: #a8843a;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-mono-stack), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  --shadow-panel: 0 1px 0 0 rgb(255 255 255 / 0.03) inset, 0 12px 40px -12px rgb(0 0 0 / 0.6);
+}
+
+[data-theme="light"] {
+  --color-bg: #f7f8fb;
+  --color-bg-elevated: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f2f4f9;
+  --color-border: #e2e6ef;
+  --color-border-strong: #cbd2e0;
+
+  --color-fg: #10131c;
+  --color-fg-muted: #59617a;
+  --color-fg-subtle: #838ca3;
+
+  --color-accent: #5b46f0;
+  --color-accent-soft: #ece9ff;
+  --color-accent-fg: #4a37cc;
+
+  --color-cyan: #0a94a4;
+  --color-cyan-soft: #dff6f8;
+
+  --color-positive: #0f9d63;
+  --color-positive-soft: #dcf5e9;
+  --color-negative: #d92e42;
+  --color-negative-soft: #fde5e8;
+  --color-warning: #b57715;
+  --color-warning-soft: #fcf0d9;
+
+  --color-metal: #9a7523;
+  --color-metal-deep: #6d5115;
+
+  --shadow-panel: 0 1px 2px 0 rgb(16 19 28 / 0.04), 0 8px 24px -12px rgb(16 19 28 / 0.12);
+}
+
+/* --------------------------------------------------------------- base ---- */
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+/* Tabular figures everywhere a number is compared against another number. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: white;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Thin scrollbars — horizontal table scroll on mobile is a first-class
+   interaction here, so the bar has to be visible without being heavy. */
+.scroll-x {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+  overscroll-behavior-x: contain;
+}
+.scroll-x::-webkit-scrollbar {
+  height: 8px;
+}
+.scroll-x::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-x::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 999px;
+}
+
+/* ------------------------------------------------------------ surfaces --- */
+
+@utility panel {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+}
+
+/* Faint grid, the visual signature of the app. Sits behind the hero only. */
+@utility grid-bg {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-border) 70%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-border) 70%, transparent) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 20%, transparent 75%);
+}
+
+@utility text-gradient {
+  background: linear-gradient(100deg, var(--color-fg) 20%, var(--color-accent-fg) 55%, var(--color-cyan) 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* --------------------------------------------------------- liquid metal -- */
+
+/*
+ * The champion treatment. A conic gradient slowly rotating under a highlight
+ * sweep reads as brushed metal without shipping a WebGL shader, and it degrades
+ * to a flat gold surface when animation is reduced.
+ *
+ * Used on exactly one element per page: rank #1.
+ */
+@utility liquid-metal {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    conic-gradient(
+      from var(--metal-angle, 0deg) at 30% 30%,
+      #6a5320 0deg,
+      #e8c468 55deg,
+      #fff4d0 95deg,
+      #c9a44e 150deg,
+      #7a5f26 210deg,
+      #f0d489 280deg,
+      #8a6c2c 330deg,
+      #6a5320 360deg
+    );
+  animation: metal-rotate 9s linear infinite;
+}
+
+@utility liquid-metal-sheen {
+  position: absolute;
+  inset: -50%;
+  background: linear-gradient(
+    75deg,
+    transparent 35%,
+    rgb(255 255 255 / 0.55) 48%,
+    transparent 62%
+  );
+  animation: metal-sweep 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes metal-rotate {
+  to {
+    --metal-angle: 360deg;
+  }
+}
+
+@keyframes metal-sweep {
+  0%,
+  100% {
+    transform: translateX(-40%);
+  }
+  50% {
+    transform: translateX(40%);
+  }
+}
+
+@property --metal-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* ------------------------------------------------------------ animation -- */
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility rise {
+  animation: rise-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes balloon-float {
+  0% {
+    transform: translateY(0) rotate(var(--tilt, 0deg));
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-115vh) rotate(calc(var(--tilt, 0deg) * -1));
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@utility skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 25%,
+    var(--color-surface-hover) 50%,
+    var(--color-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/*
+ * Data legibility beats motion. Every decorative animation stops here; the
+ * metal badge keeps its colour, it just stops moving.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

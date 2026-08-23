@@ -1,0 +1,27 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "iconLibrary": "lucide",
+  "registries": {
+    "@watermelon": "https://registry.watermelon.sh/r/{name}.json",
+    "@cult-ui": "https://cult-ui.com/r/{name}.json",
+    "@dotmatrix": "https://dotmatrix.zzzzshawn.cloud/r/{name}.json",
+    "@componentry": "https://componentry.fun/r/{name}.json"
+  }
+}

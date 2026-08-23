@@ -1,0 +1,11 @@
+ticker,company_name,sector,industry,country,market_cap,employees,peer_group
+AAPL,Apple Inc.,Technology,Consumer Electronics,United States,3620000000000,164000,MSFT|NVDA
+MSFT,Microsoft Corporation,Technology,Software — Infrastructure,United States,3180000000000,228000,AAPL|NVDA|GOOGL
+NVDA,NVIDIA Corporation,Technology,Semiconductors,United States,3340000000000,29600,AAPL|MSFT
+META,"Meta Platforms, Inc.",Communication Services,Internet Content & Information,United States,1520000000000,74000,GOOGL|NFLX
+GOOGL,Alphabet Inc.,Communication Services,Internet Content & Information,United States,2310000000000,183000,META|MSFT|NFLX
+AMZN,"Amazon.com, Inc.",Consumer Discretionary,Internet Retail,United States,2290000000000,1556000,TSLA|GOOGL
+TSLA,"Tesla, Inc.",Consumer Discretionary,Auto Manufacturers,United States,1290000000000,125000,AMZN
+JPM,JPMorgan Chase & Co.,Financials,Banks — Diversified,United States,682000000000,317000,V
+V,Visa Inc.,Financials,Credit Services,United States,612000000000,31600,JPM
+NFLX,"Netflix, Inc.",Communication Services,Entertainment,United States,386000000000,14000,META|GOOGL

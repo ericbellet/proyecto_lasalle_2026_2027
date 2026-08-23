@@ -1,0 +1,434 @@
+[
+  {
+    "model_version_id": "student-01-v1",
+    "student_id": "student-01",
+    "version": "v1",
+    "name": "Weighted Value Score",
+    "research_area": "RA1",
+    "approach": "Hand-tuned 7-factor linear score over the data lake",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-01-v2",
+    "student_id": "student-01",
+    "version": "v2",
+    "name": "XGBoost Multi-Horizon",
+    "research_area": "RA2",
+    "approach": "Gradient boosting per horizon on point-in-time features",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-01-v3",
+    "student_id": "student-01",
+    "version": "v3",
+    "name": "Agent Committee",
+    "research_area": "RA3",
+    "approach": "Five specialised agents feeding an investment committee",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-02-v1",
+    "student_id": "student-02",
+    "version": "v1",
+    "name": "Momentum Tilt Score",
+    "research_area": "RA1",
+    "approach": "Momentum-heavy weighting with a valuation penalty",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-02-v2",
+    "student_id": "student-02",
+    "version": "v2",
+    "name": "LightGBM Ranker",
+    "research_area": "RA2",
+    "approach": "Learning-to-rank over 60 engineered features",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-02-v3",
+    "student_id": "student-02",
+    "version": "v3",
+    "name": "Market + News Duo",
+    "research_area": "RA3",
+    "approach": "Two agents: market regime and news sentiment",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-03-v1",
+    "student_id": "student-03",
+    "version": "v1",
+    "name": "Balanced Fundamental Score",
+    "research_area": "RA1",
+    "approach": "Equal-weight z-scores across six factor blocks",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-03-v2",
+    "student_id": "student-03",
+    "version": "v2",
+    "name": "Calibrated Logistic",
+    "research_area": "RA2",
+    "approach": "Logistic regression with isotonic calibration",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-03-v3",
+    "student_id": "student-03",
+    "version": "v3",
+    "name": "Fundamental Analyst Agent",
+    "research_area": "RA3",
+    "approach": "Single deep fundamental agent with warehouse tools",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-04-v1",
+    "student_id": "student-04",
+    "version": "v1",
+    "name": "Contrarian Score",
+    "research_area": "RA1",
+    "approach": "Buys the worst momentum decile on mean reversion",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-04-v2",
+    "student_id": "student-04",
+    "version": "v2",
+    "name": "Random Forest",
+    "research_area": "RA2",
+    "approach": "Untuned random forest on raw warehouse columns",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-04-v3",
+    "student_id": "student-04",
+    "version": "v3",
+    "name": "Single LLM Prompt",
+    "research_area": "RA3",
+    "approach": "One prompt with the full feature table pasted in",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-05-v1",
+    "student_id": "student-05",
+    "version": "v1",
+    "name": "Quality-First Score",
+    "research_area": "RA1",
+    "approach": "ROIC and balance-sheet weighted composite",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-05-v2",
+    "student_id": "student-05",
+    "version": "v2",
+    "name": "Stacked Ensemble",
+    "research_area": "RA2",
+    "approach": "Logistic + GBM stack with Platt scaling",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-05-v3",
+    "student_id": "student-05",
+    "version": "v3",
+    "name": "Committee with Debate",
+    "research_area": "RA3",
+    "approach": "Agents argue, committee resolves disagreement",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-06-v1",
+    "student_id": "student-06",
+    "version": "v1",
+    "name": "Conservative Value Score",
+    "research_area": "RA1",
+    "approach": "Deep-value screen with a hard debt filter",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-06-v2",
+    "student_id": "student-06",
+    "version": "v2",
+    "name": "Regularised Logistic",
+    "research_area": "RA2",
+    "approach": "L2 logistic regression, few features, heavy CV",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-06-v3",
+    "student_id": "student-06",
+    "version": "v3",
+    "name": "Earnings Agent",
+    "research_area": "RA3",
+    "approach": "Transcript-driven earnings agent plus ML prior",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-07-v1",
+    "student_id": "student-07",
+    "version": "v1",
+    "name": "Multi-Factor Perceptron",
+    "research_area": "RA1",
+    "approach": "Hand-set weights framed as a single perceptron",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-07-v2",
+    "student_id": "student-07",
+    "version": "v2",
+    "name": "XGBoost + Features v2",
+    "research_area": "RA2",
+    "approach": "Boosting on a 90-column point-in-time feature table",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-07-v3",
+    "student_id": "student-07",
+    "version": "v3",
+    "name": "Four-Agent Committee",
+    "research_area": "RA3",
+    "approach": "Fundamental, earnings, competitor, market",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-08-v1",
+    "student_id": "student-08",
+    "version": "v1",
+    "name": "Pure Momentum",
+    "research_area": "RA1",
+    "approach": "6-month momentum ranking, nothing else",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-08-v2",
+    "student_id": "student-08",
+    "version": "v2",
+    "name": "Momentum GBM",
+    "research_area": "RA2",
+    "approach": "Boosting over technical features only",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-08-v3",
+    "student_id": "student-08",
+    "version": "v3",
+    "name": "Market Regime Agent",
+    "research_area": "RA3",
+    "approach": "Regime classifier driving a momentum agent",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-09-v1",
+    "student_id": "student-09",
+    "version": "v1",
+    "name": "First Attempt Score",
+    "research_area": "RA1",
+    "approach": "Three factors, weights guessed",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-09-v2",
+    "student_id": "student-09",
+    "version": "v2",
+    "name": "Feature-Rich XGBoost",
+    "research_area": "RA2",
+    "approach": "Airflow-built features, careful leakage audit",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-09-v3",
+    "student_id": "student-09",
+    "version": "v3",
+    "name": "RAG Research Agent",
+    "research_area": "RA3",
+    "approach": "Retrieval over filings feeding the ML prior",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-10-v1",
+    "student_id": "student-10",
+    "version": "v1",
+    "name": "Cash-Flow Score",
+    "research_area": "RA1",
+    "approach": "FCF yield and reinvestment weighted composite",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-10-v2",
+    "student_id": "student-10",
+    "version": "v2",
+    "name": "Tuned LightGBM",
+    "research_area": "RA2",
+    "approach": "Optuna-tuned boosting, strong CV discipline",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-10-v3",
+    "student_id": "student-10",
+    "version": "v3",
+    "name": "Seven-Agent Swarm",
+    "research_area": "RA3",
+    "approach": "Large agent graph, weak grounding in the warehouse",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-11-v1",
+    "student_id": "student-11",
+    "version": "v1",
+    "name": "Sector-Neutral Score",
+    "research_area": "RA1",
+    "approach": "Z-scores computed within each sector",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-11-v2",
+    "student_id": "student-11",
+    "version": "v2",
+    "name": "Sector-Neutral GBM",
+    "research_area": "RA2",
+    "approach": "Boosting with sector-relative features only",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-11-v3",
+    "student_id": "student-11",
+    "version": "v3",
+    "name": "Competitor Agent",
+    "research_area": "RA3",
+    "approach": "Peer-comparison agent over warehouse tools",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-12-v1",
+    "student_id": "student-12",
+    "version": "v1",
+    "name": "Growth-At-Any-Price",
+    "research_area": "RA1",
+    "approach": "Revenue growth dominant, valuation ignored",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-12-v2",
+    "student_id": "student-12",
+    "version": "v2",
+    "name": "Deep MLP",
+    "research_area": "RA2",
+    "approach": "Small neural network, minimal regularisation",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-12-v3",
+    "student_id": "student-12",
+    "version": "v3",
+    "name": "Committee + Search",
+    "research_area": "RA3",
+    "approach": "Agents with live web search for catalysts",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-13-v1",
+    "student_id": "student-13",
+    "version": "v1",
+    "name": "Documented Weighted Score",
+    "research_area": "RA1",
+    "approach": "Every weight justified in writing",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-13-v2",
+    "student_id": "student-13",
+    "version": "v2",
+    "name": "Calibrated Ensemble",
+    "research_area": "RA2",
+    "approach": "Ensemble with explicit reliability diagrams",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-13-v3",
+    "student_id": "student-13",
+    "version": "v3",
+    "name": "Grounded Committee",
+    "research_area": "RA3",
+    "approach": "Agents forced to cite warehouse rows",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-14-v1",
+    "student_id": "student-14",
+    "version": "v1",
+    "name": "Simple Score",
+    "research_area": "RA1",
+    "approach": "Two factors, equal weights",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-14-v2",
+    "student_id": "student-14",
+    "version": "v2",
+    "name": "Decision Tree",
+    "research_area": "RA2",
+    "approach": "Single tree, shallow depth",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-14-v3",
+    "student_id": "student-14",
+    "version": "v3",
+    "name": "Two-Agent Setup",
+    "research_area": "RA3",
+    "approach": "Fundamental and market agents with a tie-break rule",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-15-v1",
+    "student_id": "student-15",
+    "version": "v1",
+    "name": "Textbook Value Score",
+    "research_area": "RA1",
+    "approach": "Classic value screen, lightly tuned",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-15-v2",
+    "student_id": "student-15",
+    "version": "v2",
+    "name": "Random Forest v2",
+    "research_area": "RA2",
+    "approach": "Forest with feature-importance pruning",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-15-v3",
+    "student_id": "student-15",
+    "version": "v3",
+    "name": "Analyst Agent Pair",
+    "research_area": "RA3",
+    "approach": "Fundamental and news agents, simple averaging",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-16-v1",
+    "student_id": "student-16",
+    "version": "v1",
+    "name": "Weighted Score v1",
+    "research_area": "RA1",
+    "approach": "Six factors with documented normalisation",
+    "created_at": "2025-11-24T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-16-v2",
+    "student_id": "student-16",
+    "version": "v2",
+    "name": "Horizon-Specific Models",
+    "research_area": "RA2",
+    "approach": "One calibrated model per horizon",
+    "created_at": "2026-03-02T08:00:00.000Z"
+  },
+  {
+    "model_version_id": "student-16-v3",
+    "student_id": "student-16",
+    "version": "v3",
+    "name": "Investment Committee v3",
+    "research_area": "RA3",
+    "approach": "Specialised agents, structured output, ML prior as a tool",
+    "created_at": "2026-06-08T08:00:00.000Z"
+  }
+]

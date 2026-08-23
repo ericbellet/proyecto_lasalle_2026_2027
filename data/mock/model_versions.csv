@@ -1,0 +1,49 @@
+model_version_id,student_id,version,name,research_area,approach,created_at
+student-01-v1,student-01,v1,Weighted Value Score,RA1,Hand-tuned 7-factor linear score over the data lake,2025-11-24T08:00:00.000Z
+student-01-v2,student-01,v2,XGBoost Multi-Horizon,RA2,Gradient boosting per horizon on point-in-time features,2026-03-02T08:00:00.000Z
+student-01-v3,student-01,v3,Agent Committee,RA3,Five specialised agents feeding an investment committee,2026-06-08T08:00:00.000Z
+student-02-v1,student-02,v1,Momentum Tilt Score,RA1,Momentum-heavy weighting with a valuation penalty,2025-11-24T08:00:00.000Z
+student-02-v2,student-02,v2,LightGBM Ranker,RA2,Learning-to-rank over 60 engineered features,2026-03-02T08:00:00.000Z
+student-02-v3,student-02,v3,Market + News Duo,RA3,Two agents: market regime and news sentiment,2026-06-08T08:00:00.000Z
+student-03-v1,student-03,v1,Balanced Fundamental Score,RA1,Equal-weight z-scores across six factor blocks,2025-11-24T08:00:00.000Z
+student-03-v2,student-03,v2,Calibrated Logistic,RA2,Logistic regression with isotonic calibration,2026-03-02T08:00:00.000Z
+student-03-v3,student-03,v3,Fundamental Analyst Agent,RA3,Single deep fundamental agent with warehouse tools,2026-06-08T08:00:00.000Z
+student-04-v1,student-04,v1,Contrarian Score,RA1,Buys the worst momentum decile on mean reversion,2025-11-24T08:00:00.000Z
+student-04-v2,student-04,v2,Random Forest,RA2,Untuned random forest on raw warehouse columns,2026-03-02T08:00:00.000Z
+student-04-v3,student-04,v3,Single LLM Prompt,RA3,One prompt with the full feature table pasted in,2026-06-08T08:00:00.000Z
+student-05-v1,student-05,v1,Quality-First Score,RA1,ROIC and balance-sheet weighted composite,2025-11-24T08:00:00.000Z
+student-05-v2,student-05,v2,Stacked Ensemble,RA2,Logistic + GBM stack with Platt scaling,2026-03-02T08:00:00.000Z
+student-05-v3,student-05,v3,Committee with Debate,RA3,"Agents argue, committee resolves disagreement",2026-06-08T08:00:00.000Z
+student-06-v1,student-06,v1,Conservative Value Score,RA1,Deep-value screen with a hard debt filter,2025-11-24T08:00:00.000Z
+student-06-v2,student-06,v2,Regularised Logistic,RA2,"L2 logistic regression, few features, heavy CV",2026-03-02T08:00:00.000Z
+student-06-v3,student-06,v3,Earnings Agent,RA3,Transcript-driven earnings agent plus ML prior,2026-06-08T08:00:00.000Z
+student-07-v1,student-07,v1,Multi-Factor Perceptron,RA1,Hand-set weights framed as a single perceptron,2025-11-24T08:00:00.000Z
+student-07-v2,student-07,v2,XGBoost + Features v2,RA2,Boosting on a 90-column point-in-time feature table,2026-03-02T08:00:00.000Z
+student-07-v3,student-07,v3,Four-Agent Committee,RA3,"Fundamental, earnings, competitor, market",2026-06-08T08:00:00.000Z
+student-08-v1,student-08,v1,Pure Momentum,RA1,"6-month momentum ranking, nothing else",2025-11-24T08:00:00.000Z
+student-08-v2,student-08,v2,Momentum GBM,RA2,Boosting over technical features only,2026-03-02T08:00:00.000Z
+student-08-v3,student-08,v3,Market Regime Agent,RA3,Regime classifier driving a momentum agent,2026-06-08T08:00:00.000Z
+student-09-v1,student-09,v1,First Attempt Score,RA1,"Three factors, weights guessed",2025-11-24T08:00:00.000Z
+student-09-v2,student-09,v2,Feature-Rich XGBoost,RA2,"Airflow-built features, careful leakage audit",2026-03-02T08:00:00.000Z
+student-09-v3,student-09,v3,RAG Research Agent,RA3,Retrieval over filings feeding the ML prior,2026-06-08T08:00:00.000Z
+student-10-v1,student-10,v1,Cash-Flow Score,RA1,FCF yield and reinvestment weighted composite,2025-11-24T08:00:00.000Z
+student-10-v2,student-10,v2,Tuned LightGBM,RA2,"Optuna-tuned boosting, strong CV discipline",2026-03-02T08:00:00.000Z
+student-10-v3,student-10,v3,Seven-Agent Swarm,RA3,"Large agent graph, weak grounding in the warehouse",2026-06-08T08:00:00.000Z
+student-11-v1,student-11,v1,Sector-Neutral Score,RA1,Z-scores computed within each sector,2025-11-24T08:00:00.000Z
+student-11-v2,student-11,v2,Sector-Neutral GBM,RA2,Boosting with sector-relative features only,2026-03-02T08:00:00.000Z
+student-11-v3,student-11,v3,Competitor Agent,RA3,Peer-comparison agent over warehouse tools,2026-06-08T08:00:00.000Z
+student-12-v1,student-12,v1,Growth-At-Any-Price,RA1,"Revenue growth dominant, valuation ignored",2025-11-24T08:00:00.000Z
+student-12-v2,student-12,v2,Deep MLP,RA2,"Small neural network, minimal regularisation",2026-03-02T08:00:00.000Z
+student-12-v3,student-12,v3,Committee + Search,RA3,Agents with live web search for catalysts,2026-06-08T08:00:00.000Z
+student-13-v1,student-13,v1,Documented Weighted Score,RA1,Every weight justified in writing,2025-11-24T08:00:00.000Z
+student-13-v2,student-13,v2,Calibrated Ensemble,RA2,Ensemble with explicit reliability diagrams,2026-03-02T08:00:00.000Z
+student-13-v3,student-13,v3,Grounded Committee,RA3,Agents forced to cite warehouse rows,2026-06-08T08:00:00.000Z
+student-14-v1,student-14,v1,Simple Score,RA1,"Two factors, equal weights",2025-11-24T08:00:00.000Z
+student-14-v2,student-14,v2,Decision Tree,RA2,"Single tree, shallow depth",2026-03-02T08:00:00.000Z
+student-14-v3,student-14,v3,Two-Agent Setup,RA3,Fundamental and market agents with a tie-break rule,2026-06-08T08:00:00.000Z
+student-15-v1,student-15,v1,Textbook Value Score,RA1,"Classic value screen, lightly tuned",2025-11-24T08:00:00.000Z
+student-15-v2,student-15,v2,Random Forest v2,RA2,Forest with feature-importance pruning,2026-03-02T08:00:00.000Z
+student-15-v3,student-15,v3,Analyst Agent Pair,RA3,"Fundamental and news agents, simple averaging",2026-06-08T08:00:00.000Z
+student-16-v1,student-16,v1,Weighted Score v1,RA1,Six factors with documented normalisation,2025-11-24T08:00:00.000Z
+student-16-v2,student-16,v2,Horizon-Specific Models,RA2,One calibrated model per horizon,2026-03-02T08:00:00.000Z
+student-16-v3,student-16,v3,Investment Committee v3,RA3,"Specialised agents, structured output, ML prior as a tool",2026-06-08T08:00:00.000Z

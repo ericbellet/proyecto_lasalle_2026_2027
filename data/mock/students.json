@@ -1,0 +1,98 @@
+[
+  {
+    "student_id": "student-01",
+    "name": "Laura García",
+    "handle": "lgarcia",
+    "joined_at": "2026-01-12T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-02",
+    "name": "Carlos Mendoza",
+    "handle": "cmendoza",
+    "joined_at": "2026-01-13T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-03",
+    "name": "María Fernández",
+    "handle": "mfernandez",
+    "joined_at": "2026-01-14T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-04",
+    "name": "Adrián Ruiz",
+    "handle": "aruiz",
+    "joined_at": "2026-01-15T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-05",
+    "name": "Nadia Bouzid",
+    "handle": "nbouzid",
+    "joined_at": "2026-01-16T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-06",
+    "name": "Pau Serrano",
+    "handle": "pserrano",
+    "joined_at": "2026-01-12T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-07",
+    "name": "Sofía Ramírez",
+    "handle": "sramirez",
+    "joined_at": "2026-01-13T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-08",
+    "name": "Yusuf Karaca",
+    "handle": "ykaraca",
+    "joined_at": "2026-01-14T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-09",
+    "name": "Elena Kovács",
+    "handle": "ekovacs",
+    "joined_at": "2026-01-15T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-10",
+    "name": "Bruno Oliveira",
+    "handle": "boliveira",
+    "joined_at": "2026-01-16T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-11",
+    "name": "Aisha Rahman",
+    "handle": "arahman",
+    "joined_at": "2026-01-12T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-12",
+    "name": "Marc Vidal",
+    "handle": "mvidal",
+    "joined_at": "2026-01-13T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-13",
+    "name": "Irene Castillo",
+    "handle": "icastillo",
+    "joined_at": "2026-01-14T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-14",
+    "name": "Tomás Aguirre",
+    "handle": "taguirre",
+    "joined_at": "2026-01-15T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-15",
+    "name": "Chiara Rossi",
+    "handle": "crossi",
+    "joined_at": "2026-01-16T10:00:00.000Z"
+  },
+  {
+    "student_id": "student-16",
+    "name": "Diego Salazar",
+    "handle": "dsalazar",
+    "joined_at": "2026-01-12T10:00:00.000Z"
+  }
+]
