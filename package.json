@@ -16,12 +16,15 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed/run.ts",
+    "db:seed:universe": "tsx --env-file=.env src/db/seed/universe.ts",
     "data:export": "tsx scripts/export-mock-dataset.ts",
     "docs:pdf": "tsx scripts/build-pdfs.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.109.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.38.4",
     "lucide-react": "^0.474.0",
     "next": "15.5.23",

@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import * as schema from "@/db/schema";
+import { env } from "@/lib/env";
 
 /**
  * Database client.
@@ -17,12 +18,18 @@ declare global {
 function createClient(connectionString: string) {
   // `prepare: false` keeps this compatible with transaction-mode connection
   // poolers, which is how both Neon and Supabase serve serverless clients.
-  const sql = postgres(connectionString, { max: 5, prepare: false });
+  const sql = postgres(connectionString, {
+    max: 1,
+    prepare: false,
+    connect_timeout: 15,
+    idle_timeout: 20,
+    ssl: "require",
+  });
   return drizzle(sql, { schema });
 }
 
 export function db() {
-  const connectionString = process.env.DATABASE_URL?.trim();
+  const connectionString = env.databaseUrl;
   if (!connectionString) {
     throw new Error(
       "DATABASE_URL is not set. Either configure a PostgreSQL connection or run with MOCK_MODE=true.",

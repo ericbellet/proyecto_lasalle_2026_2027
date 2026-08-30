@@ -17,6 +17,8 @@ import {
   type RawSearchParams,
 } from "@/lib/data/search-params";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Leaderboard",
   description: "One row per pick. Points are awarded when the deadline arrives.",

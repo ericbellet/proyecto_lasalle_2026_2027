@@ -140,7 +140,7 @@ function applyFilters(
 /** --------------------------------------------------------------- overview */
 
 export interface Overview {
-  currentCycle: PredictionCycle;
+  currentCycle: PredictionCycle | null;
   previousCycle: PredictionCycle | null;
   totalCycles: number;
   students: number;
@@ -159,18 +159,20 @@ export async function getOverview(): Promise<Overview> {
   const dataset = await getDataset();
   const predictions = allPredictions(dataset);
   const resolved = predictions.filter((p) => p.result);
-  const currentCycle = dataset.cycles[dataset.cycles.length - 1] as PredictionCycle;
+  const currentCycle = dataset.cycles[dataset.cycles.length - 1] ?? null;
 
   return {
     currentCycle,
     previousCycle: dataset.cycles[dataset.cycles.length - 2] ?? null,
     totalCycles: dataset.cycles.length,
     students: dataset.students.length,
-    activeModels: new Set(
-      dataset.predictions
-        .filter((p) => p.cycleId === currentCycle.id)
-        .map((p) => p.modelVersionId),
-    ).size,
+    activeModels: currentCycle
+      ? new Set(
+          dataset.predictions
+            .filter((p) => p.cycleId === currentCycle.id)
+            .map((p) => p.modelVersionId),
+        ).size
+      : 0,
     activePredictions: predictions.filter((p) => p.status === "active").length,
     resolvedPredictions: resolved.length,
     totalPredictions: predictions.length,
@@ -179,7 +181,7 @@ export async function getOverview(): Promise<Overview> {
       : 0,
     averageReturn: mean(resolved.map((p) => p.result?.realizedReturn ?? 0)),
     stocks: dataset.stocks.length,
-    currentArea: areaOfCycle(dataset, currentCycle.id),
+    currentArea: currentCycle ? areaOfCycle(dataset, currentCycle.id) : "RA1",
     anchorDate: dataset.anchorDate,
   };
 }

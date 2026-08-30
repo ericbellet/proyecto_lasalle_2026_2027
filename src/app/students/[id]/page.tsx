@@ -22,9 +22,11 @@ import { getStudentDetail, getStudents } from "@/lib/data/queries";
 import { formatDate } from "@/lib/dates";
 import { cn, pct, returnTone, signedPct } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
-  const students = await getStudents();
-  return students.map((student) => ({ id: student.id }));
+  return [];
 }
 
 export async function generateMetadata({

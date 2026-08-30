@@ -18,6 +18,8 @@ import { getPredictionDetail, getStudents } from "@/lib/data/queries";
 import { formatDate } from "@/lib/dates";
 import { cn, money, num, pct, returnTone, signedPct } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {

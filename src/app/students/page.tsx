@@ -14,6 +14,8 @@ import { LEADERBOARD_CONFIG } from "@/config/leaderboard";
 import { getLeaderboard, getOverview } from "@/lib/data/queries";
 import { cn, pct, returnTone, signedPct } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Students",
   description: "Every participant, their points and their record so far.",
