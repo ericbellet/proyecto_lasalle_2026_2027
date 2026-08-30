@@ -36,17 +36,15 @@ export default async function LeaderboardPage({
   const deadline = parseOptionalId(raw.deadline);
   const filtered = Boolean(studentId || ticker || deadline || horizon !== "OVERALL");
 
-  const [entries, picks, options] = await Promise.all([
-    getLeaderboard(),
-    getPickBoard({
-      horizon,
-      studentId,
-      ticker,
-      deadline,
-      window: filtered ? "all-time" : "this-week",
-    }),
-    getPickFilterOptions(),
-  ]);
+  const entries = await getLeaderboard();
+  const picks = await getPickBoard({
+    horizon,
+    studentId,
+    ticker,
+    deadline,
+    window: filtered ? "all-time" : "this-week",
+  });
+  const options = await getPickFilterOptions();
 
   const ranked = entries.filter((entry) => !entry.provisional);
 

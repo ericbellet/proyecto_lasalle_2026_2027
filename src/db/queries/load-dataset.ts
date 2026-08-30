@@ -24,31 +24,37 @@ import type { Horizon, ResearchArea } from "@/config/challenge";
 export async function loadDatasetFromDb(): Promise<Dataset> {
   const client = db();
 
-  const [
-    studentRows,
-    integrationRows,
-    modelRows,
-    cycleRows,
-    snapshotRows,
-    predictionRows,
-    resultRows,
-    stockRows,
-    priceRows,
-    benchmarkRows,
-    featureRows,
-  ] = await Promise.all([
-    client.select().from(schema.students).orderBy(asc(schema.students.id)),
-    client.select().from(schema.studentIntegrations),
-    client.select().from(schema.modelVersions).orderBy(asc(schema.modelVersions.id)),
-    client.select().from(schema.predictionCycles).orderBy(asc(schema.predictionCycles.deadlineAt)),
-    client.select().from(schema.predictionSnapshots),
-    client.select().from(schema.predictions).orderBy(asc(schema.predictions.id)),
-    client.select().from(schema.predictionResults),
-    client.select().from(schema.stocks).orderBy(asc(schema.stocks.ticker)),
-    client.select().from(schema.marketPrices).orderBy(asc(schema.marketPrices.date)),
-    client.select().from(schema.benchmarkPrices).orderBy(asc(schema.benchmarkPrices.date)),
-    client.select().from(schema.stockFeatures).orderBy(asc(schema.stockFeatures.snapshotDate)),
-  ]);
+  // Sequential on purpose: the Supabase transaction pooler (6543) plus a
+  // single serverless connection deadlocks if these run in Promise.all.
+  const studentRows = await client.select().from(schema.students).orderBy(asc(schema.students.id));
+  const integrationRows = await client.select().from(schema.studentIntegrations);
+  const modelRows = await client
+    .select()
+    .from(schema.modelVersions)
+    .orderBy(asc(schema.modelVersions.id));
+  const cycleRows = await client
+    .select()
+    .from(schema.predictionCycles)
+    .orderBy(asc(schema.predictionCycles.deadlineAt));
+  const snapshotRows = await client.select().from(schema.predictionSnapshots);
+  const predictionRows = await client
+    .select()
+    .from(schema.predictions)
+    .orderBy(asc(schema.predictions.id));
+  const resultRows = await client.select().from(schema.predictionResults);
+  const stockRows = await client.select().from(schema.stocks).orderBy(asc(schema.stocks.ticker));
+  const priceRows = await client
+    .select()
+    .from(schema.marketPrices)
+    .orderBy(asc(schema.marketPrices.date));
+  const benchmarkRows = await client
+    .select()
+    .from(schema.benchmarkPrices)
+    .orderBy(asc(schema.benchmarkPrices.date));
+  const featureRows = await client
+    .select()
+    .from(schema.stockFeatures)
+    .orderBy(asc(schema.stockFeatures.snapshotDate));
 
   const iso = (value: Date | null) => (value ? value.toISOString() : null);
   const anchorDate =
