@@ -29,17 +29,17 @@ export interface StudentConfig {
  * student has deployed anything.
  */
 export const STUDENTS: StudentConfig[] = [
-  // {
-  //   id: "student-01",
-  //   name: "Laura García",
-  //   handle: "lgarcia",
-  //   api: {
-  //     baseUrl: "https://lgarcia-investing.vercel.app",
-  //     predictions: "/api/predictions",
-  //     health: "/api/health",
-  //   },
-  //   enabled: true,
-  // },
+  {
+    id: "eric-bellet",
+    name: "Eric Bellet",
+    handle: "eric-bellet",
+    api: {
+      baseUrl: "https://eric-bellet-predictions.vercel.app",
+      predictions: "/api/predictions",
+      health: "/api/health",
+    },
+    enabled: true,
+  },
 ];
 
 export function studentConfig(id: string): StudentConfig | undefined {
