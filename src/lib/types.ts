@@ -266,6 +266,7 @@ export interface LeaderboardEntry {
   student: Student;
   modelVersion: ModelVersion | null;
   metrics: StudentMetrics;
+  /** Championship points: one per resolved pick that reached +10%. */
   score: number;
   components: Record<string, number>;
   provisional: boolean;

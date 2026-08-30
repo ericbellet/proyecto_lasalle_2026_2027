@@ -7,16 +7,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const dataset = await getDataset();
   const now = new Date();
 
-  const staticRoutes = [
-    "",
-    "/leaderboard",
-    "/students",
-    "/stocks",
-    "/consensus",
-    "/history",
-    "/methodology",
-    "/integrate",
-  ];
+  const staticRoutes = ["", "/leaderboard", "/students", "/integrate"];
 
   return [
     ...staticRoutes.map((path) => ({
@@ -27,12 +18,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     ...dataset.students.map((student) => ({
       url: `${site.url}/students/${student.id}`,
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    })),
-    ...dataset.stocks.map((stock) => ({
-      url: `${site.url}/stocks/${stock.ticker}`,
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.6,

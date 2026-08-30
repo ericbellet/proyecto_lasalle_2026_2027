@@ -1,4 +1,4 @@
-import { HORIZON_CALENDAR_DAYS, type Horizon } from "@/config/challenge";
+import { HORIZON_CALENDAR_DAYS, WEEKLY_LOCK, type Horizon } from "@/config/challenge";
 
 /**
  * Date helpers.
@@ -116,6 +116,13 @@ export function cycleIdFor(date: Date): string {
 export function startOfIsoWeek(date: Date): Date {
   const dayNumber = (date.getUTCDay() + 6) % 7;
   return parseIsoDate(toIsoDate(addDays(date, -dayNumber)));
+}
+
+/** Sunday 21:59 UTC of the ISO week that contains `monday` (or any day in it). */
+export function cycleDeadlineAt(monday: Date): Date {
+  const deadline = addDays(startOfIsoWeek(monday), 6);
+  deadline.setUTCHours(WEEKLY_LOCK.utcHour, WEEKLY_LOCK.utcMinute, 0, 0);
+  return deadline;
 }
 
 export function formatDate(iso: string | Date, locale = "en-GB"): string {

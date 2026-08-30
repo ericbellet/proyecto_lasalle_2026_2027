@@ -1,10 +1,12 @@
 import {
   HORIZONS,
+  POINTS_PER_HIT,
   RESEARCH_AREAS,
   type Horizon,
   type LeaderboardWindowId,
   type ResearchArea,
 } from "@/config/challenge";
+import { pointsForPick } from "@/lib/predictions/outcome";
 import { LEADERBOARD_CONFIG } from "@/config/leaderboard";
 import { getDataset, type Dataset } from "@/lib/data/dataset";
 import {
@@ -51,6 +53,9 @@ export interface LeaderboardFilters {
   horizon?: HorizonFilter;
   window?: LeaderboardWindowId;
   researchArea?: AreaFilter;
+  studentId?: string;
+  ticker?: string;
+  deadline?: string;
 }
 
 /** ------------------------------------------------------------- primitives */
@@ -125,6 +130,9 @@ function applyFilters(
     if (filters.horizon && filters.horizon !== "OVERALL" && prediction.horizon !== filters.horizon) {
       return false;
     }
+    if (filters.studentId && prediction.studentId !== filters.studentId) return false;
+    if (filters.ticker && prediction.ticker !== filters.ticker) return false;
+    if (filters.deadline && prediction.resolutionDate.slice(0, 10) !== filters.deadline) return false;
     return true;
   });
 }
@@ -203,17 +211,19 @@ function buildLeaderboard(
         student,
         modelVersion: latest,
         metrics,
-        score: scored.score,
+        score: metrics.hits * POINTS_PER_HIT,
         components: scored.components as unknown as Record<string, number>,
         provisional: metrics.resolvedPredictions < LEADERBOARD_CONFIG.minResolvedForRanking,
       } satisfies LeaderboardEntry;
     })
     .filter((entry) => entry.metrics.totalPredictions > 0);
 
-  // Ranked students first, provisional ones after, each block by score.
+  // Ranked students first, provisional ones after. Championship order is
+  // points (hits), then hit rate so a 3/3 week beats a 3/12 week.
   entries.sort((a, b) => {
     if (a.provisional !== b.provisional) return a.provisional ? 1 : -1;
     if (b.score !== a.score) return b.score - a.score;
+    if (b.metrics.hitRate !== a.metrics.hitRate) return b.metrics.hitRate - a.metrics.hitRate;
     return b.metrics.resolvedPredictions - a.metrics.resolvedPredictions;
   });
   entries.forEach((entry, index) => {
@@ -259,6 +269,72 @@ export async function getLeaderboard(filters: LeaderboardFilters = {}): Promise<
     ...entry,
     previousRank: previousRanks.get(entry.student.id) ?? null,
   }));
+}
+
+export interface PickBoardRow {
+  prediction: ResolvedPrediction;
+  student: Student;
+  cycle: PredictionCycle;
+  points: number | null;
+}
+
+/**
+ * One row per pick, newest cycle first. The public leaderboard is this board,
+ * not the blended diagnostic score.
+ */
+export async function getPickBoard(filters: LeaderboardFilters = {}): Promise<PickBoardRow[]> {
+  const dataset = await getDataset();
+  const predictions = applyFilters(dataset, allPredictions(dataset), filters);
+  const students = new Map(dataset.students.map((student) => [student.id, student]));
+  const cycleById = new Map(dataset.cycles.map((cycle) => [cycle.id, cycle]));
+  const cycleIndex = new Map(dataset.cycles.map((cycle, index) => [cycle.id, index]));
+  const horizonOrder = new Map(HORIZONS.map((horizon, index) => [horizon, index]));
+
+  return predictions
+    .map((prediction) => {
+      const student = students.get(prediction.studentId);
+      const cycle = cycleById.get(prediction.cycleId);
+      if (!student || !cycle) return null;
+      return {
+        prediction,
+        student,
+        cycle,
+        points: pointsForPick(prediction),
+      } satisfies PickBoardRow;
+    })
+    .filter((row): row is PickBoardRow => row !== null)
+    .sort((a, b) => {
+      const cycleDelta =
+        (cycleIndex.get(b.prediction.cycleId) ?? 0) - (cycleIndex.get(a.prediction.cycleId) ?? 0);
+      if (cycleDelta !== 0) return cycleDelta;
+      const nameDelta = a.student.name.localeCompare(b.student.name);
+      if (nameDelta !== 0) return nameDelta;
+      const horizonDelta =
+        (horizonOrder.get(a.prediction.horizon) ?? 0) - (horizonOrder.get(b.prediction.horizon) ?? 0);
+      if (horizonDelta !== 0) return horizonDelta;
+      return a.prediction.rank - b.prediction.rank;
+    });
+}
+
+export interface PickFilterOptions {
+  students: Array<{ id: string; name: string }>;
+  tickers: string[];
+  deadlines: string[];
+}
+
+export async function getPickFilterOptions(): Promise<PickFilterOptions> {
+  const dataset = await getDataset();
+  const deadlines = [
+    ...new Set(allPredictions(dataset).map((prediction) => prediction.resolutionDate.slice(0, 10))),
+  ].sort((a, b) => b.localeCompare(a));
+
+  return {
+    students: [...dataset.students]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((student) => ({ id: student.id, name: student.name })),
+    tickers: [...dataset.stocks.map((stock) => stock.ticker)].sort(),
+    deadlines,
+  };
 }
 
 export interface HorizonLeaderboards {
@@ -316,9 +392,9 @@ export async function getAwards(): Promise<Award[]> {
     pick(
       "best-overall",
       "Best overall",
-      "Highest blended leaderboard score",
+      "Most championship points (1 per +10% hit)",
       (a, b) => b.score - a.score,
-      (entry) => entry.score.toFixed(1),
+      (entry) => `${entry.score} pts`,
     ),
     pick(
       "best-calibration",
@@ -358,10 +434,10 @@ export async function getAwards(): Promise<Award[]> {
       return {
         id: `best-${horizon.toLowerCase()}`,
         label: `Best ${horizon}`,
-        description: `Highest score on the ${horizon} horizon`,
+        description: `Most points on the ${horizon} horizon`,
         studentId: winner.student.id,
         studentName: winner.student.name,
-        value: winner.score.toFixed(1),
+        value: `${winner.score} pts`,
       } satisfies Award;
     }),
   );

@@ -52,18 +52,16 @@ export function Champion({
                 {first.student.name}
               </Link>
               <p className="mt-1 truncate text-sm text-fg-muted">
-                {first.modelVersion
-                  ? `${first.modelVersion.name} · ${first.modelVersion.version}`
-                  : "No model registered"}
+                {first.metrics.hits} hits · {first.metrics.resolvedPredictions} resolved
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
-            <ChampionStat label="Score" value={first.score.toFixed(1)} highlight />
+            <ChampionStat label="Pts" value={String(first.score)} highlight />
             <ChampionStat label="Hit rate" value={pct(first.metrics.hitRate)} />
+            <ChampionStat label="Hits" value={`${first.metrics.hits}/${first.metrics.resolvedPredictions}`} />
             <ChampionStat label="Avg return" value={signedPct(first.metrics.averageReturn)} />
-            <ChampionStat label="Brier" value={first.metrics.brierScore.toFixed(3)} />
           </div>
         </div>
       </article>
@@ -136,13 +134,13 @@ function RunnerUp({ entry }: { entry: LeaderboardEntry }) {
           {entry.student.name}
         </Link>
         <p className="truncate text-xs text-fg-muted">
-          {entry.modelVersion?.name ?? "—"} · {pct(entry.metrics.hitRate)} hit rate
+          {entry.metrics.hits}/{entry.metrics.resolvedPredictions} hits · {pct(entry.metrics.hitRate)}
         </p>
       </div>
 
       <div className="shrink-0 text-right">
-        <p className="tnum text-lg font-semibold tracking-tight">{entry.score.toFixed(1)}</p>
-        <p className="font-mono text-[10px] uppercase tracking-wider text-fg-subtle">score</p>
+        <p className="tnum text-lg font-semibold tracking-tight">{entry.score}</p>
+        <p className="font-mono text-[10px] uppercase tracking-wider text-fg-subtle">pts</p>
       </div>
 
       <Avatar name={entry.student.name} seed={entry.student.avatarSeed} size={36} className="hidden sm:flex" />

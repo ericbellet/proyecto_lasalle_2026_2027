@@ -51,11 +51,13 @@ export function SectionHeading({
   title,
   description,
   action,
+  titleClassName,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
   action?: ReactNode;
+  titleClassName?: string;
 }) {
   return (
     <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -65,7 +67,9 @@ export function SectionHeading({
             {eyebrow}
           </p>
         ) : null}
-        <h2 className="text-balance text-xl font-semibold tracking-tight sm:text-2xl">{title}</h2>
+        <h2 className={cn("text-balance text-xl font-semibold tracking-tight sm:text-2xl", titleClassName)}>
+          {title}
+        </h2>
         {description ? (
           <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-fg-muted">{description}</p>
         ) : null}

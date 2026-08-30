@@ -1,6 +1,6 @@
 # Architecture
 
-Value Investing Challenge is one Next.js application. Students build the systems that feed it. The professor platform is the system of record.
+LaSalle Investing is one Next.js application. Students build the systems that feed it. The professor platform is the system of record.
 
 ## Diagram
 

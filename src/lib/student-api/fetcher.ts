@@ -4,6 +4,13 @@ import { predictionsUrl, type StudentConfig } from "@/config/students";
 import { env } from "@/lib/env";
 import { stableHash } from "@/lib/mock/dataset";
 import {
+  FETCH_RETRY_ATTEMPTS,
+  FETCH_RETRY_BASE_MS,
+  isRetryableFetch,
+  retryDelayMs,
+} from "@/lib/student-api/retry";
+import {
+  studentNamesMatch,
   summariseIssues,
   validateStudentPayload,
   type ContractIssue,
@@ -113,15 +120,16 @@ export async function fetchStudent(
       };
     }
 
-    // Guard against a copy-pasted config pointing two students at one endpoint.
-    if (validated.payload.student_id !== student.id) {
+    // The URL is already tied to a roster row; the name is a sanity check so a
+    // copied endpoint cannot be stored under the wrong student.
+    if (!studentNamesMatch(validated.payload.student, student.name)) {
       return {
         ...base,
         latencyMs,
         httpStatus: response.status,
         rawBody: body,
         status: "invalid",
-        error: `Payload declares student_id "${validated.payload.student_id}" but this endpoint is registered to "${student.id}"`,
+        error: `Payload declares student "${validated.payload.student}" but this endpoint is registered to "${student.name}"`,
       };
     }
 
@@ -153,6 +161,34 @@ export async function fetchStudent(
   }
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Same as `fetchStudent`, but retries timeouts, HTTP/network errors and
+ * non-JSON bodies. A valid JSON payload that fails the Zod contract is not
+ * retried — it will fail the same way on the next attempt.
+ */
+export async function fetchStudentWithRetry(
+  student: StudentConfig,
+  options?: { timeoutMs?: number; attempts?: number; retryDelayMs?: number },
+): Promise<FetchOutcome> {
+  const attempts = options?.attempts ?? FETCH_RETRY_ATTEMPTS;
+  const baseDelay = options?.retryDelayMs ?? FETCH_RETRY_BASE_MS;
+  let last: FetchOutcome | undefined;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    last = await fetchStudent(student, options);
+    if (!isRetryableFetch(last.status, last.error)) return last;
+    if (attempt < attempts - 1 && baseDelay > 0) {
+      await sleep(retryDelayMs(attempt, baseDelay));
+    }
+  }
+
+  return last as FetchOutcome;
+}
+
 /**
  * Fetches the whole cohort with bounded concurrency.
  *
@@ -171,7 +207,7 @@ export async function fetchAllStudents(
   for (let start = 0; start < enabled.length; start += limit) {
     const batch = enabled.slice(start, start + limit);
     const settled = await Promise.allSettled(
-      batch.map((student) => fetchStudent(student, options)),
+      batch.map((student) => fetchStudentWithRetry(student, options)),
     );
 
     settled.forEach((entry, index) => {

@@ -9,7 +9,7 @@ export const maxDuration = 120;
  * Prices every prediction whose horizon has elapsed.
  *
  * Safe to run repeatedly: already-resolved predictions are skipped, so this can
- * sit behind a daily cron without any coordination.
+ * sit behind the weekly Sunday cron without any coordination.
  */
 export async function POST(request: Request) {
   const auth = authorise(request);

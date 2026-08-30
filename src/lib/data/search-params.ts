@@ -33,10 +33,18 @@ export function parseHorizon(value: string | undefined): HorizonFilter {
   return HORIZONS.includes(value as Horizon) ? (value as Horizon) : "OVERALL";
 }
 
-export function parseWindow(value: string | undefined): LeaderboardWindowId {
+export function parseOptionalId(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+export function parseWindow(
+  value: string | undefined,
+  fallback: LeaderboardWindowId = DEFAULT_WINDOW,
+): LeaderboardWindowId {
   return LEADERBOARD_WINDOWS.some((window) => window.id === value)
     ? (value as LeaderboardWindowId)
-    : DEFAULT_WINDOW;
+    : fallback;
 }
 
 export function parseArea(value: string | undefined): AreaFilter {

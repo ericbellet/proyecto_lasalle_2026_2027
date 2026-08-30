@@ -1,4 +1,5 @@
 import { ImmutableSnapshotError, MockModeError } from "@/lib/admin/operations";
+import { RosterError } from "@/lib/admin/endpoint-url";
 
 /**
  * Turns an operation error into a response an administrator can act on.
@@ -13,6 +14,10 @@ export function failure(error: unknown): Response {
   }
   if (error instanceof ImmutableSnapshotError) {
     return Response.json({ ok: false, error: error.message, code: "locked" }, { status: 409 });
+  }
+
+  if (error instanceof RosterError) {
+    return Response.json({ ok: false, error: error.message, code: "roster" }, { status: 400 });
   }
 
   console.error("[admin]", error);

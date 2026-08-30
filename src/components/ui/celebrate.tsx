@@ -41,7 +41,7 @@ export function Celebrate({
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const storageKey = `vic-celebrated:${once}`;
+    const storageKey = `lasalle-celebrated:${once}`;
     try {
       if (window.sessionStorage.getItem(storageKey)) return;
       window.sessionStorage.setItem(storageKey, "1");

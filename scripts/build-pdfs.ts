@@ -126,7 +126,7 @@ function pageHtml(title: string, subtitle: string, area: string, html: string): 
 </head>
 <body>
   <header class="masthead">
-    <div class="brand">Value Investing Challenge</div>
+    <div class="brand">LaSalle Investing</div>
     <div class="area">${area}</div>
   </header>
   <h1>${title}</h1>
@@ -155,7 +155,7 @@ async function main() {
       const html = await marked.parse(body, { gfm: true });
       const document = pageHtml(
         meta.title ?? file,
-        meta.subtitle ?? "Value Investing Challenge",
+        meta.subtitle ?? "LaSalle Investing",
         meta.area ?? "",
         html,
       );
@@ -173,7 +173,7 @@ async function main() {
         headerTemplate: `<div></div>`,
         footerTemplate: `
           <div style="font-size:8px;width:100%;padding:0 18mm;color:#5b6170;display:flex;justify-content:space-between;font-family:ui-monospace,monospace;">
-            <span>Value Investing Challenge</span>
+            <span>LaSalle Investing</span>
             <span class="pageNumber"></span>
           </div>`,
         margin: { top: "18mm", bottom: "18mm", left: "16mm", right: "16mm" },

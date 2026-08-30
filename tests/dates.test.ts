@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   calculateResolutionDate,
+  cycleDeadlineAt,
   isMarketDay,
   nearestMarketDay,
   parseIsoDate,
@@ -34,6 +35,16 @@ describe("calculateResolutionDate", () => {
     const resolved = calculateResolutionDate("2026-08-31", "1W");
     expect(isMarketDay(resolved)).toBe(true);
     expect(toIsoDate(resolved) > "2026-09-07").toBe(true);
+  });
+});
+
+describe("cycleDeadlineAt", () => {
+  it("is Sunday 21:59 UTC of the ISO week", () => {
+    const deadline = cycleDeadlineAt(parseIsoDate("2026-08-24"));
+    expect(toIsoDate(deadline)).toBe("2026-08-30");
+    expect(deadline.getUTCHours()).toBe(21);
+    expect(deadline.getUTCMinutes()).toBe(59);
+    expect(deadline.getUTCDay()).toBe(0);
   });
 });
 

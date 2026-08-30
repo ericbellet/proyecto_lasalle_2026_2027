@@ -39,9 +39,8 @@ const nextConfig: NextConfig = {
   },
 
   experimental: {
-    // Inlines critical CSS into the HTML and defers the rest — removes a
-    // render-blocking stylesheet request from the critical path.
-    optimizeCss: true,
+    // Critters + a large RSC payload can stall first paint in the browser.
+    optimizeCss: false,
   },
 
   async headers() {

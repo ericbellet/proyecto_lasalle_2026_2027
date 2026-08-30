@@ -1,15 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { EXAMPLE_PAYLOAD, validateStudentPayload } from "@/lib/validation/student-contract";
+import {
+  EXAMPLE_PAYLOAD,
+  normaliseStudentName,
+  studentNamesMatch,
+  validateStudentPayload,
+} from "@/lib/validation/student-contract";
 
 const valid = {
-  student_id: "student-01",
-  model_version: "v2",
+  student: "Laura García",
   generated_at: "2026-09-14T12:00:00Z",
   predictions: [
-    { ticker: "META", horizon: "1W", rank: 1, probability: 0.71, expected_return: 0.14 },
-    { ticker: "NVDA", horizon: "1W", rank: 2, probability: 0.68, expected_return: 0.13 },
-    { ticker: "AAPL", horizon: "1W", rank: 3, probability: 0.55, expected_return: 0.11 },
+    { ticker: "META", horizon: "1W", rank: 1 },
+    { ticker: "NVDA", horizon: "1W", rank: 2 },
+    { ticker: "AAPL", horizon: "1W", rank: 3 },
   ],
 };
 
@@ -25,10 +29,28 @@ describe("validateStudentPayload", () => {
     if (result.ok) expect(result.payload.predictions[0]?.ticker).toBe("META");
   });
 
+  it("ignores leftover model and forecast fields", () => {
+    const result = validateStudentPayload({
+      ...valid,
+      model_version: "v2",
+      model_name: "XGBoost",
+      predictions: [
+        {
+          ticker: "META",
+          horizon: "1W",
+          rank: 1,
+          probability: 1.4,
+          expected_return: 0.14,
+        },
+      ],
+    });
+    expect(result.ok).toBe(true);
+  });
+
   it("uppercases tickers", () => {
     const result = validateStudentPayload({
       ...valid,
-      predictions: [{ ticker: "meta", horizon: "1W", rank: 1, probability: 0.5, expected_return: 0.1 }],
+      predictions: [{ ticker: "meta", horizon: "1W", rank: 1 }],
     });
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.payload.predictions[0]?.ticker).toBe("META");
@@ -38,8 +60,8 @@ describe("validateStudentPayload", () => {
     const result = validateStudentPayload({
       ...valid,
       predictions: [
-        { ticker: "META", horizon: "1W", rank: 1, probability: 0.7, expected_return: 0.12 },
-        { ticker: "NVDA", horizon: "1W", rank: 1, probability: 0.6, expected_return: 0.11 },
+        { ticker: "META", horizon: "1W", rank: 1 },
+        { ticker: "NVDA", horizon: "1W", rank: 1 },
       ],
     });
     expect(result.ok).toBe(false);
@@ -52,22 +74,14 @@ describe("validateStudentPayload", () => {
     const result = validateStudentPayload({
       ...valid,
       predictions: [
-        { ticker: "NVDA", horizon: "1M", rank: 1, probability: 0.7, expected_return: 0.12 },
-        { ticker: "NVDA", horizon: "1M", rank: 2, probability: 0.6, expected_return: 0.11 },
+        { ticker: "NVDA", horizon: "1M", rank: 1 },
+        { ticker: "NVDA", horizon: "1M", rank: 2 },
       ],
     });
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.issues.some((issue) => issue.message.includes("appears twice"))).toBe(true);
     }
-  });
-
-  it("rejects a probability outside [0, 1]", () => {
-    const result = validateStudentPayload({
-      ...valid,
-      predictions: [{ ticker: "AAPL", horizon: "1W", rank: 1, probability: 1.4, expected_return: 0.1 }],
-    });
-    expect(result.ok).toBe(false);
   });
 
   it("rejects generated_at without a timezone offset", () => {
@@ -80,10 +94,16 @@ describe("validateStudentPayload", () => {
       ticker: `T${index}`,
       horizon: "1W" as const,
       rank: (index % 3) + 1,
-      probability: 0.4,
-      expected_return: 0.1,
     }));
     const result = validateStudentPayload({ ...valid, predictions });
     expect(result.ok).toBe(false);
+  });
+});
+
+describe("studentNamesMatch", () => {
+  it("treats accent and spacing differences as the same person", () => {
+    expect(studentNamesMatch("Sofía  Ramírez", "Sofia Ramirez")).toBe(true);
+    expect(normaliseStudentName("Laura García")).toBe("laura garcia");
+    expect(studentNamesMatch("Laura García", "Carlos Mendoza")).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 ---
 title: "PROJECT 2 — INVESTMENT DATA WAREHOUSE & ML"
-subtitle: "Value Investing Challenge · RA2"
+subtitle: "LaSalle Investing · RA2"
 area: "RA2"
 ---
 
@@ -12,7 +12,7 @@ Una predicción no es "esta acción va a subir". Una predicción es: *"dada la i
 
 En RA1 construisteis un Data Lake y un scoring manual (`v1`). Ahora transformáis ese lake en una plataforma analítica: orquestación con Airflow, un Data Warehouse dimensional en PostgreSQL, tablas de features con corrección point-in-time y modelos de Machine Learning que estiman `P(Return >= 10%)` por horizonte.
 
-Seguís sin construir la web. La plataforma **Value Investing Challenge** consulta vuestro endpoint cada ciclo semanal, congela la respuesta y os ranquea. La tarea de predicción es idéntica: **Top 3 tickers por horizonte** para `1W`, `1M`, `3M`, `6M`, **máximo 12 predicciones por ciclo**. Una predicción es **hit** cuando `realized_return >= 0.10`.
+Seguís sin construir la web. La plataforma **LaSalle Investing** consulta vuestro endpoint cada ciclo semanal, congela la respuesta y os ranquea. La tarea de predicción es idéntica: **Top 3 tickers por horizonte** para `1W`, `1M`, `3M`, `6M`, **máximo 12 predicciones por ciclo**. Una predicción es **hit** cuando `realized_return >= 0.10`.
 
 En RA2 vuestro modelo se registra como **`v2`**. Los resultados de `v1` no se sobreescriben. Al final de RA2 tendréis por primera vez la respuesta empírica a la primera gran pregunta del curso: **¿el ML batió al scoring manual?** Es perfectamente posible que no. Con tasas base de 9% en 1W y 10 tickers en el universo, un modelo mal validado pierde contra una fórmula sensata. Detectarlo y explicar por qué es el aprendizaje; ocultarlo no.
 
@@ -196,7 +196,7 @@ Con 10 tickers y un histórico corto, el sobreajuste es el escenario por defecto
 - Al menos 3 checks de calidad implementados como tareas que pueden fallar el DAG.
 - Al menos dos modelos comparados por horizonte, con tabla de métricas incluyendo PR-AUC y Brier.
 - Split cronológico y probabilidades calibradas.
-- Endpoint `GET /api/predictions` sirviendo `model_version: "v2"` con payload válido.
+- Endpoint `GET /api/predictions` con payload válido según el contrato (`student` = vuestro nombre).
 - Comparación documentada de `v2` frente a vuestro propio `v1`.
 
 ## 9. Opcional / bonus
@@ -298,7 +298,7 @@ Alcanzar +10% es mucho más difícil en horizontes cortos. **Quien declare 70% d
 - Endpoint accesible por HTTPS y respondiendo durante el ciclo de recogida.
 - Informe `v1` vs `v2` en Markdown dentro del repositorio.
 
-## 16. Conexión con el Value Investing Challenge
+## 16. Conexión con el LaSalle Investing
 
 La plataforma consulta vuestro endpoint una vez por ciclo, guarda la respuesta de forma inmutable y no la modifica jamás. Cuando el horizonte vence, calcula el retorno realizado y resuelve la predicción. **Toda predicción queda registrada antes de conocer el resultado.**
 
@@ -308,17 +308,13 @@ La plataforma consulta vuestro endpoint una vez por ciclo, guarda la respuesta d
 
 ```json
 {
-  "student_id": "student-01",
-  "model_version": "v1",
-  "model_name": "Weighted Value Score",
+  "student": "Laura García",
   "generated_at": "2026-09-14T12:00:00Z",
   "predictions": [
     {
       "ticker": "META",
       "horizon": "1W",
       "rank": 1,
-      "probability": 0.71,
-      "expected_return": 0.14,
       "target_price": 712.40,
       "investment_thesis": "optional free text",
       "risks": "optional free text"
@@ -327,8 +323,6 @@ La plataforma consulta vuestro endpoint una vez por ciclo, guarda la respuesta d
 }
 ```
 
-Reglas de validación (Zod) aplicadas por la plataforma: `horizon` ∈ {1W,1M,3M,6M}; `rank` ∈ 1..3 y único por horizonte; `probability` ∈ [0,1]; `expected_return` ∈ [-1,10]; `generated_at` debe ser un datetime ISO-8601 **con offset**; ticker en mayúsculas; sin tickers duplicados dentro del mismo horizonte; máximo 12 predicciones. **Un payload que falla la validación se rechaza por completo y esa semana el alumno no puntúa.** La guía completa está en `docs/STUDENT_INTEGRATION.md`.
+Reglas de validación (Zod) aplicadas por la plataforma: `horizon` ∈ {1W,1M,3M,6M}; `rank` ∈ 1..3 y único por horizonte; `generated_at` debe ser un datetime ISO-8601 **con offset**; ticker en mayúsculas; sin tickers duplicados dentro del mismo horizonte; máximo 12 predicciones; `student` es vuestro nombre. No enviéis `model_name`, `model_version`, `probability` ni `expected_return`. **Un payload que falla la validación se rechaza por completo y esa semana el alumno no puntúa.** La guía completa está en `docs/STUDENT_INTEGRATION.md`.
 
-En RA2 debéis enviar `model_version: "v2"`. El ejemplo de arriba muestra `v1` porque es el contrato literal; cambiad ese campo.
-
-La plataforma conserva `v1` y `v2` por separado y los compara. Al terminar RA2 debéis poder responder con números: **¿el ML batió al scoring manual?** Si la respuesta es no, el trabajo consiste en explicar por qué —muestra pequeña, features débiles, calibración pobre, universo demasiado estrecho— y esa explicación puntúa. Lo que no puntúa es presentar solo el horizonte o la semana en la que `v2` quedó por delante.
+El JSON semanal no lleva generación de modelo. Conservad vuestro RA1 y comparadlo con RA2 en el informe. Al terminar RA2 debéis poder responder con números: **¿el ML batió al scoring manual?** Si la respuesta es no, el trabajo consiste en explicar por qué —muestra pequeña, features débiles, calibración pobre, universo demasiado estrecho— y esa explicación puntúa. Lo que no puntúa es presentar solo el horizonte o la semana en la que el ML quedó por delante.

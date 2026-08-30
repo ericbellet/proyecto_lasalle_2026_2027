@@ -24,6 +24,7 @@ export const env = {
 
   databaseUrl,
   adminToken: process.env.ADMIN_TOKEN?.trim() || null,
+  cronSecret: process.env.CRON_SECRET?.trim() || null,
   marketDataProvider: (process.env.MARKET_DATA_PROVIDER?.trim() || "mock") as "mock" | "yahoo",
   studentFetchTimeoutMs: Number(process.env.STUDENT_FETCH_TIMEOUT_MS ?? 8000),
   noindex: flag(process.env.NEXT_PUBLIC_NOINDEX, false),

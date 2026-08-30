@@ -10,6 +10,7 @@ import {
 import {
   addDays,
   calculateResolutionDate,
+  cycleDeadlineAt,
   cycleIdFor,
   nearestMarketDay,
   parseIsoDate,
@@ -102,14 +103,15 @@ function buildCycles(anchor: string, count: number): PredictionCycle[] {
     const monday = addDays(anchorMonday, -offset * 7);
     const id = cycleIdFor(monday);
     const isCurrent = offset === 0;
+    const deadline = cycleDeadlineAt(monday);
     cycles.push({
       id,
       label: id.replace("-W", " · Week "),
       weekNumber: Number(id.slice(-2)),
       year: Number(id.slice(0, 4)),
-      opensAt: `${toIsoDate(addDays(monday, -3))}T09:00:00.000Z`,
-      deadlineAt: `${toIsoDate(monday)}T08:00:00.000Z`,
-      lockedAt: isCurrent ? null : `${toIsoDate(monday)}T08:05:00.000Z`,
+      opensAt: monday.toISOString(),
+      deadlineAt: deadline.toISOString(),
+      lockedAt: isCurrent ? null : deadline.toISOString(),
       status: isCurrent ? "open" : "locked",
     });
   }
@@ -171,7 +173,7 @@ function buildIntegrations(rng: Rng, cycles: PredictionCycle[]): StudentIntegrat
       healthy: null,
       error: "HTTP 502 from upstream deployment",
       timeout: "No response within 8000 ms",
-      invalid: "predictions.4.probability: Number must be less than or equal to 1",
+      invalid: "predictions.1.rank: duplicate rank 1 for horizon 1W",
       unknown: null,
     };
 
@@ -182,7 +184,7 @@ function buildIntegrations(rng: Rng, cycles: PredictionCycle[]): StudentIntegrat
       healthEndpoint: "/api/health",
       apiKeyEnvVar: index % 4 === 0 ? `STUDENT_${profile.id.replace("-", "_").toUpperCase()}_KEY` : null,
       enabled: true,
-      lastFetchAt: `${toIsoDate(parseIsoDate(lastCycle.deadlineAt.slice(0, 10)))}T08:0${rng.int(1, 9)}:00.000Z`,
+      lastFetchAt: lastCycle.deadlineAt,
       lastStatus: status,
       lastError: errors[status],
       lastLatencyMs: status === "timeout" ? 8000 : rng.int(120, 1400),
@@ -238,14 +240,19 @@ function buildPredictions(
 
   cycles.forEach((cycle, cycleIndex) => {
     const area = researchAreaForCycle(cycleIndex, cycles.length);
-    const cycleDate = cycle.deadlineAt.slice(0, 10);
-    const predictionDate = toIsoDate(nearestMarketDay(parseIsoDate(cycleDate), -1));
+    const sunday = parseIsoDate(cycle.deadlineAt.slice(0, 10));
+    const featureDate = toIsoDate(nearestMarketDay(sunday, -1));
+    // 1W resolves on this cycle's Sunday, so the pick is dated one week earlier.
+    const predictionDate = toIsoDate(addDays(sunday, -HORIZON_CALENDAR_DAYS["1W"]));
+
+    const resolutionFor = (horizon: Horizon): string =>
+      horizon === "1W" ? toIsoDate(sunday) : toIsoDate(calculateResolutionDate(predictionDate, horizon));
 
     // Forward outcomes are known to the generator only. They are what turns a
     // "skill" number into predictions that actually came true.
     const outcomes = new Map<Horizon, Map<string, number | null>>();
     for (const horizon of HORIZONS) {
-      const resolutionDate = toIsoDate(calculateResolutionDate(predictionDate, horizon));
+      const resolutionDate = resolutionFor(horizon);
       const perTicker = new Map<string, number | null>();
       for (const profile of STOCK_UNIVERSE) {
         perTicker.set(
@@ -274,7 +281,7 @@ function buildPredictions(
           profile,
           area,
           horizon,
-          cycleDate,
+          featureDate,
           featureIndex,
           horizonOutcomes,
           previousPicks,
@@ -292,7 +299,7 @@ function buildPredictions(
             4,
           );
           const entryPrice = closeOnOrBefore(series, candidate.ticker, predictionDate) ?? 0;
-          const resolutionDate = toIsoDate(calculateResolutionDate(predictionDate, horizon));
+          const resolutionDate = resolutionFor(horizon);
           const isResolved = resolutionDate <= anchor && outcome !== null;
 
           const prediction: Prediction = {
@@ -332,23 +339,19 @@ function buildPredictions(
               benchmarkReturn: round(benchmarkReturn, 5),
               alpha: round(realizedReturn - benchmarkReturn, 5),
               hitTarget: realizedReturn >= TARGET_RETURN,
-              resolvedAt: `${resolutionDate}T22:00:00.000Z`,
+              resolvedAt: `${resolutionDate}T21:59:00.000Z`,
             });
           }
         });
       }
 
       const payload = {
-        student_id: profile.id,
-        model_version: modelVersion.version,
-        model_name: modelVersion.name,
+        student: profile.name,
         generated_at: cycle.deadlineAt,
         predictions: studentPredictions.map((prediction) => ({
           ticker: prediction.ticker,
           horizon: prediction.horizon,
           rank: prediction.rank,
-          probability: prediction.probability,
-          expected_return: prediction.expectedReturn,
           target_price: prediction.targetPrice,
           investment_thesis: prediction.investmentThesis,
           risks: prediction.risks,

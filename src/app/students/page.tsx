@@ -16,7 +16,7 @@ import { cn, pct, returnTone, signedPct } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Students",
-  description: "Every participant, their current model and their record so far.",
+  description: "Every participant, their points and their record so far.",
 };
 
 export default async function StudentsPage() {
@@ -27,21 +27,20 @@ export default async function StudentsPage() {
       <SectionHeading
         eyebrow="Cohort"
         title="Students"
-        description="Each student owns a data pipeline, a model and an endpoint. The platform only ever sees the endpoint."
+        description="Ranked by points: one per stock that reached +10% at the deadline."
       />
 
-      <dl className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-2.5 lg:grid-cols-3">
         <Stat label="Students" value={overview.students} hint={`${overview.totalCycles} cycles run`} />
         <Stat
           label="Ranked"
           value={entries.filter((entry) => !entry.provisional).length}
           hint={`≥ ${LEADERBOARD_CONFIG.minResolvedForRanking} resolved predictions`}
         />
-        <Stat label="Active models" value={overview.activeModels} hint="Submitting this cycle" />
         <Stat
-          label="Predictions"
-          value={overview.totalPredictions}
-          hint={`${overview.resolvedPredictions} resolved`}
+          label="Points awarded"
+          value={entries.reduce((sum, entry) => sum + entry.score, 0)}
+          hint={`${overview.resolvedPredictions} resolved picks`}
         />
       </dl>
 
@@ -64,9 +63,7 @@ export default async function StudentsPage() {
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="tnum text-lg font-semibold leading-none">
-                    {entry.score.toFixed(1)}
-                  </p>
+                  <p className="tnum text-lg font-semibold leading-none">{entry.score}</p>
                   <p className="mt-1 font-mono text-[9px] uppercase tracking-wider text-fg-subtle">
                     {entry.provisional ? "provisional" : `rank ${entry.rank}`}
                   </p>
@@ -83,7 +80,7 @@ export default async function StudentsPage() {
                   ) : null}
                 </div>
                 <Meter
-                  value={entry.score / 100}
+                  value={entry.metrics.hitRate}
                   tone={entry.rank === 1 && !entry.provisional ? "metal" : "accent"}
                   className="mt-2"
                 />
@@ -91,13 +88,13 @@ export default async function StudentsPage() {
 
               <dl className="grid grid-cols-4 gap-2 border-t border-border pt-3">
                 <MiniStat label="n" value={String(entry.metrics.resolvedPredictions)} />
+                <MiniStat label="Hits" value={String(entry.metrics.hits)} />
                 <MiniStat label="Hit" value={pct(entry.metrics.hitRate, 0)} />
                 <MiniStat
                   label="Return"
                   value={signedPct(entry.metrics.averageReturn, 1)}
                   tone={returnTone(entry.metrics.averageReturn)}
                 />
-                <MiniStat label="Brier" value={entry.metrics.brierScore.toFixed(3)} />
               </dl>
             </Link>
           </li>

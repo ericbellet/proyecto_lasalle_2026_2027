@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CheckCircle2, XCircle } from "lucide-react";
 
+import { ProfessorPanel } from "@/components/integrate/professor-panel";
 import { CodeBlock } from "@/components/ui/code-block";
 import {
   Badge,
@@ -15,9 +16,9 @@ import {
   HORIZONS,
   MAX_PREDICTIONS_PER_CYCLE,
   PICKS_PER_HORIZON,
-  TARGET_RETURN,
 } from "@/config/challenge";
 import { EXAMPLE_PAYLOAD } from "@/lib/validation/student-contract";
+import { env } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Connect your model",
@@ -25,15 +26,11 @@ export const metadata: Metadata = {
 };
 
 const FIELDS = [
-  ["student_id", "string", "yes", "The id the professor assigned you. Must match exactly."],
-  ["model_version", "string", "yes", "Free-form, e.g. v1, v2.3, agents-v3. Used to track your evolution."],
-  ["model_name", "string", "no", "Human label shown on the leaderboard, e.g. 'XGBoost multi-horizon'."],
+  ["student", "string", "yes", "Your name, as registered by the professor. Accents and extra spaces are ignored."],
   ["generated_at", "ISO 8601", "yes", "When your system produced these predictions. Must include a timezone offset."],
   ["predictions[].ticker", "string", "yes", "Uppercase symbol from the challenge universe."],
   ["predictions[].horizon", HORIZONS.join(" | "), "yes", "Which horizon this pick belongs to."],
   ["predictions[].rank", `1–${PICKS_PER_HORIZON}`, "yes", "Your ordering within that horizon. No duplicates."],
-  ["predictions[].probability", "0–1", "yes", `Probability of reaching +${Math.round(TARGET_RETURN * 100)}% inside the horizon.`],
-  ["predictions[].expected_return", "-1–10", "yes", "Your point estimate as a decimal: 0.14 means +14%."],
   ["predictions[].target_price", "number", "no", "Price you expect at the horizon."],
   ["predictions[].investment_thesis", "string", "no", "Up to 2000 characters. Shown on the prediction page."],
   ["predictions[].risks", "string", "no", "Up to 2000 characters. What would make you wrong."],
@@ -50,17 +47,13 @@ def predictions():
     picks = my_model.top_picks()  # your RA1/RA2/RA3 system
 
     return {
-        "student_id": "student-01",
-        "model_version": "v2",
-        "model_name": "XGBoost multi-horizon",
+        "student": "Laura García",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "predictions": [
             {
                 "ticker": p.ticker,
                 "horizon": p.horizon,          # "1W" | "1M" | "3M" | "6M"
                 "rank": p.rank,                # 1, 2 or 3
-                "probability": round(p.probability, 4),
-                "expected_return": round(p.expected_return, 4),
             }
             for p in picks
         ],
@@ -69,7 +62,7 @@ def predictions():
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "model_version": "v2"}`;
+    return {"status": "ok"}`;
 
 const NEXT_EXAMPLE = `// app/api/predictions/route.ts — Next.js on Vercel
 import { NextResponse } from "next/server";
@@ -80,16 +73,12 @@ export async function GET() {
   const picks = await topPicks();
 
   return NextResponse.json({
-    student_id: "student-01",
-    model_version: "v3",
-    model_name: "Investment committee",
+    student: "Laura García",
     generated_at: new Date().toISOString(),
     predictions: picks.map((pick) => ({
       ticker: pick.ticker,
       horizon: pick.horizon,
       rank: pick.rank,
-      probability: pick.probability,
-      expected_return: pick.expectedReturn,
     })),
   });
 }`;
@@ -98,7 +87,6 @@ const CHECKLIST = [
   { ok: true, text: "Endpoint answers a plain GET with no authentication, or with a key you gave the professor." },
   { ok: true, text: "Responds in under 8 seconds. Precompute your shortlist; do not train a model inside the request." },
   { ok: true, text: `At most ${MAX_PREDICTIONS_PER_CYCLE} predictions: ${PICKS_PER_HORIZON} per horizon.` },
-  { ok: true, text: "Probabilities are decimals between 0 and 1, not percentages." },
   { ok: false, text: "Do not return a different shortlist on every request — the platform snapshots once and locks it." },
   { ok: false, text: "Do not rank two tickers the same inside one horizon; the payload is rejected outright." },
   { ok: false, text: "Do not put an API key in a query string. Send it in a header and tell the professor the env var name." },
@@ -118,7 +106,7 @@ export default function IntegratePage() {
           "Deploy your system somewhere with a public HTTPS URL.",
           "Implement GET /api/predictions.",
           "Return the JSON schema below.",
-          "Send the professor your base URL.",
+          "Send the professor your base URL — they register it; you do not log in here.",
           "Watch yourself appear on the leaderboard.",
         ].map((step, index) => (
           <li key={step} className="panel flex gap-3 p-4">
@@ -201,12 +189,28 @@ export default function IntegratePage() {
 
       <Panel className="border-warning/30 bg-warning-soft/30 p-5">
         <p className="text-sm leading-relaxed">
-          <strong className="font-semibold">Your endpoint is polled, then frozen.</strong> At each
-          cycle deadline the platform fetches your shortlist once, hashes the raw response and locks
-          it. Editing your endpoint afterwards has no effect on predictions already recorded — which
-          is the whole point.
+          <strong className="font-semibold">Your endpoint is polled, then frozen.</strong> Every
+          Sunday at 23:59 Europe/Madrid the platform fetches your shortlist, hashes the raw
+          response and locks that student&apos;s snapshot. Editing your endpoint afterwards has no
+          effect on predictions already recorded — which is the whole point.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-fg-muted">
+          If your URL is down that night, the other students are still locked. The professor can
+          retry only the failed endpoints (three attempts with backoff during the job, then{" "}
+          <code className="font-mono text-[11px]">POST /api/admin/retry-failed</code>) without
+          unlocking anyone else. Waiting until next Sunday is too late for that week&apos;s 1W
+          picks.
         </p>
       </Panel>
+
+      <section>
+        <SectionHeading
+          eyebrow="For the professor"
+          title="Register each student URL"
+          description="Students host GET /api/predictions on Vercel (or anywhere HTTPS). You store the URL here. The Sunday cron pulls it."
+        />
+        <ProfessorPanel mockMode={env.mockMode} />
+      </section>
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { TARGET_RETURN } from "@/config/challenge";
+import { POINTS_PER_HIT, TARGET_RETURN } from "@/config/challenge";
+import type { ResolvedPrediction } from "@/lib/types";
 
 /**
  * The arithmetic that turns two prices into a scored outcome.
@@ -37,4 +38,13 @@ export function calculatePredictionOutcome(
     alpha: realizedReturn - benchmarkReturn,
     hitTarget: realizedReturn >= TARGET_RETURN,
   };
+}
+
+/**
+ * Championship points for one pick. `null` while the horizon is still open:
+ * active predictions do not score, they also do not count as a miss.
+ */
+export function pointsForPick(prediction: ResolvedPrediction): number | null {
+  if (!prediction.result) return null;
+  return prediction.result.hitTarget ? POINTS_PER_HIT : 0;
 }

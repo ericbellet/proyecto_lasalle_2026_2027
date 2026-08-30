@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { TARGET_RETURN } from "@/config/challenge";
-import { calculatePredictionOutcome } from "@/lib/predictions/outcome";
+import { POINTS_PER_HIT, TARGET_RETURN } from "@/config/challenge";
+import { calculatePredictionOutcome, pointsForPick } from "@/lib/predictions/outcome";
+import { prediction, resolved } from "./helpers";
 
 describe("calculatePredictionOutcome", () => {
   it("marks a +10% close as a hit", () => {
@@ -32,5 +33,19 @@ describe("calculatePredictionOutcome", () => {
   it("rejects non-positive prices", () => {
     expect(() => calculatePredictionOutcome(0, 110)).toThrow(/positive/);
     expect(() => calculatePredictionOutcome(100, -1)).toThrow(/positive/);
+  });
+});
+
+describe("pointsForPick", () => {
+  it("awards one point on a hit", () => {
+    expect(pointsForPick(resolved(0.7, true))).toBe(POINTS_PER_HIT);
+  });
+
+  it("awards zero on a miss", () => {
+    expect(pointsForPick(resolved(0.7, false))).toBe(0);
+  });
+
+  it("does not score an open horizon", () => {
+    expect(pointsForPick(prediction())).toBeNull();
   });
 });

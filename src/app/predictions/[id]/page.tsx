@@ -27,7 +27,7 @@ export async function generateMetadata({
   if (!detail) return { title: "Prediction not found" };
   return {
     title: `${detail.student.name} · ${detail.prediction.ticker} ${detail.prediction.horizon}`,
-    description: `Stated ${pct(detail.prediction.probability, 0)} probability of ${detail.prediction.ticker} reaching +10% within ${detail.prediction.horizon}.`,
+    description: `${detail.student.name} picked ${detail.prediction.ticker} for the ${detail.prediction.horizon} horizon.`,
   };
 }
 
@@ -35,7 +35,7 @@ export default async function PredictionPage({ params }: { params: Promise<{ id:
   const detail = await getPredictionDetail((await params).id);
   if (!detail) notFound();
 
-  const { prediction, student, stock, cycle, snapshot, modelVersion, features } = detail;
+  const { prediction, student, cycle, snapshot, features } = detail;
   const result = prediction.result;
   const students = new Map((await getStudents()).map((entry) => [entry.id, entry]));
 
@@ -54,13 +54,10 @@ export default async function PredictionPage({ params }: { params: Promise<{ id:
           <div className="min-w-0">
             <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">
               {student.name} picked{" "}
-              <Link href={`/stocks/${prediction.ticker}`} className="tnum hover:text-accent-fg">
-                {prediction.ticker}
-              </Link>
+              <span className="tnum">{prediction.ticker}</span>
             </h1>
             <p className="mt-1 text-xs text-fg-muted">
-              {modelVersion ? `${modelVersion.name} · ${modelVersion.version}` : "Unknown model"} ·
-              rank #{prediction.rank} of the {HORIZON_LABELS[prediction.horizon]} shortlist
+              Rank #{prediction.rank} of the {HORIZON_LABELS[prediction.horizon]} shortlist
             </p>
           </div>
         </div>
@@ -69,12 +66,12 @@ export default async function PredictionPage({ params }: { params: Promise<{ id:
           <Badge tone="accent">{prediction.horizon}</Badge>
           {result ? (
             result.hitTarget ? (
-              <Badge tone="positive">Hit</Badge>
+              <Badge tone="positive">Hit · +1 pt</Badge>
             ) : (
-              <Badge tone="negative">Miss</Badge>
+              <Badge tone="negative">Miss · 0 pts</Badge>
             )
           ) : (
-            <Badge tone="cyan">Active</Badge>
+            <Badge tone="cyan">Active · —</Badge>
           )}
         </div>
       </header>
@@ -83,15 +80,14 @@ export default async function PredictionPage({ params }: { params: Promise<{ id:
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-stretch">
         <Panel className="p-5 sm:p-6">
           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent-fg">
-            Predicted
+            Pick
           </p>
           <p className="tnum mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-            {signedPct(prediction.expectedReturn)}
+            {prediction.ticker}
           </p>
           <p className="mt-2 text-sm text-fg-muted">
-            <span className="tnum font-medium text-fg">{pct(prediction.probability, 0)}</span>{" "}
-            probability of reaching +{Math.round(TARGET_RETURN * 100)}% by{" "}
-            {formatDate(prediction.resolutionDate)}
+            Rank #{prediction.rank} · {HORIZON_LABELS[prediction.horizon]} · +
+            {Math.round(TARGET_RETURN * 100)}% by {formatDate(prediction.resolutionDate)}
           </p>
           <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border pt-4">
             <Field label="Prediction date" value={formatDate(prediction.predictionDate)} />
@@ -141,17 +137,6 @@ export default async function PredictionPage({ params }: { params: Promise<{ id:
               <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border pt-4">
                 <Field label="Resolution date" value={formatDate(result.resolvedAt)} />
                 <Field label="Exit price" value={money(result.resolutionPrice)} />
-                <Field
-                  label="Forecast error"
-                  value={signedPct(result.realizedReturn - prediction.expectedReturn)}
-                />
-                <Field
-                  label="Brier contribution"
-                  value={num(
-                    (prediction.probability - (result.hitTarget ? 1 : 0)) ** 2,
-                    3,
-                  )}
-                />
               </dl>
             </>
           ) : (
@@ -233,8 +218,7 @@ export default async function PredictionPage({ params }: { params: Promise<{ id:
             <thead>
               <tr>
                 <Th>Student</Th>
-                <Th align="right">Probability</Th>
-                <Th align="right">Expected</Th>
+                <Th align="right">Rank</Th>
                 <Th align="right">Realized</Th>
               </tr>
             </thead>
@@ -246,11 +230,8 @@ export default async function PredictionPage({ params }: { params: Promise<{ id:
                       {students.get(peer.studentId)?.name ?? peer.studentId}
                     </Link>
                   </Td>
-                  <Td align="right" className="tnum">
-                    {pct(peer.probability, 0)}
-                  </Td>
                   <Td align="right" className="tnum text-fg-muted">
-                    {signedPct(peer.expectedReturn)}
+                    {peer.rank}
                   </Td>
                   <Td
                     align="right"
@@ -277,14 +258,6 @@ export default async function PredictionPage({ params }: { params: Promise<{ id:
             {snapshot.lockedAt ? ` · locked ${formatDate(snapshot.lockedAt)}` : " · not locked"}
           </p>
         </Panel>
-      ) : null}
-
-      {stock ? (
-        <p className="text-center text-xs text-fg-subtle">
-          <Link href={`/stocks/${stock.ticker}`} className="hover:text-fg">
-            See every prediction on {stock.companyName} →
-          </Link>
-        </p>
       ) : null}
     </div>
   );

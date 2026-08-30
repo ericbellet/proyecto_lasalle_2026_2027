@@ -1,8 +1,8 @@
 import { authorise, unauthorised } from "@/lib/admin/auth";
 import { createCycle, fetchAndStore } from "@/lib/admin/operations";
+import { findStudent } from "@/lib/admin/roster";
 import { failure } from "@/lib/admin/respond";
-import { studentConfig } from "@/config/students";
-import { fetchStudent } from "@/lib/student-api/fetcher";
+import { fetchStudentWithRetry } from "@/lib/student-api/fetcher";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -18,10 +18,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!auth.ok) return unauthorised(auth);
 
   const { id } = await params;
-  const student = studentConfig(id);
+  const student = await findStudent(id);
   if (!student) {
     return Response.json(
-      { ok: false, error: `No student registered with id "${id}" in src/config/students.ts` },
+      { ok: false, error: `No student registered with id "${id}". Add the endpoint on /integrate.` },
       { status: 404 },
     );
   }
@@ -30,7 +30,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   try {
     if (dryRun) {
-      const outcome = await fetchStudent(student);
+      const outcome = await fetchStudentWithRetry(student);
       return Response.json({ ok: outcome.status === "healthy", dryRun: true, outcome });
     }
 

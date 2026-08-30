@@ -1,6 +1,6 @@
 ---
 title: "PROJECT 1 — MARKET DATA LAKE"
-subtitle: "Value Investing Challenge · RA1"
+subtitle: "LaSalle Investing · RA1"
 area: "RA1"
 ---
 
@@ -10,7 +10,7 @@ Una predicción no es "esta acción va a subir". Una predicción es: *"dada la i
 
 ## 1. Introducción del proyecto
 
-Trabajáis como Data Engineers construyendo la capa de datos de un sistema de inteligencia de inversión. No construís la web: la plataforma **Value Investing Challenge** ya existe y la mantiene el profesor. Vuestro sistema expone un endpoint HTTP; la plataforma lo consulta cada ciclo semanal, congela la respuesta de forma inmutable, espera a que la realidad ocurra y publica un leaderboard con todos los alumnos.
+Trabajáis como Data Engineers construyendo la capa de datos de un sistema de inteligencia de inversión. No construís la web: la plataforma **LaSalle Investing** ya existe y la mantiene el profesor. Vuestro sistema expone un endpoint HTTP; la plataforma lo consulta cada ciclo semanal, congela la respuesta de forma inmutable, espera a que la realidad ocurra y publica un leaderboard con todos los alumnos.
 
 El proyecto es continuo a lo largo de los tres RA. Lo que construyáis aquí es el sustrato de todo lo demás: en RA2 el Data Lake alimenta un Data Warehouse y modelos de Machine Learning, en RA3 los agentes de IA consultan ese warehouse. Si el lake es pobre, el ML de RA2 no tiene nada que aprender y los agentes de RA3 alucinan números.
 
@@ -26,7 +26,7 @@ En RA1 vuestro modelo se registra como **`v1`**: un scoring manual con pesos ele
 - Implementar controles de calidad de datos: nulos, duplicados, rangos, zonas horarias, festivos de mercado, splits y dividendos.
 - Construir un **Baseline Investment Score** como combinación lineal ponderada de features normalizadas, y justificar cada peso.
 - Transformar un score de ranking en una probabilidad calibrada, entendiendo por qué no son lo mismo.
-- Exponer el resultado como JSON válido conforme al contrato del Value Investing Challenge.
+- Exponer el resultado como JSON válido conforme al contrato del LaSalle Investing.
 
 ## 3. Arquitectura
 
@@ -61,7 +61,7 @@ Vosotros decidís proveedores de datos, qué campos ingerir, la estrategia de ca
 3. **Almacenamiento columnar particionado** en Parquet o Delta.
 4. **Controles de calidad ejecutables** que emitan un informe (filas leídas, filas rechazadas, nulos por columna, duplicados detectados).
 5. **Baseline Investment Score** con pesos documentados y justificados.
-6. **Endpoint `GET /api/predictions`** que devuelva JSON válido según el contrato, con `model_version: "v1"`.
+6. **Endpoint `GET /api/predictions`** que devuelva JSON válido según el contrato, con vuestro **nombre** en el campo `student`.
 
 ### Datos a los que aspirar
 
@@ -124,8 +124,8 @@ La primera favorece "dame toda la historia de NVDA" (partition pruning por ticke
 - Procesamiento en PySpark que produzca la tabla curated de features.
 - Informe de calidad de datos con métricas reales, no un `print("ok")`.
 - `baseline_score` calculado para los 10 tickers del universo, con pesos documentados.
-- Top 3 por horizonte para `1W`, `1M`, `3M`, `6M` con probabilidad.
-- Endpoint `GET /api/predictions` devolviendo JSON que pasa la validación de la plataforma, con `model_version: "v1"`.
+- Top 3 por horizonte para `1W`, `1M`, `3M`, `6M`.
+- Endpoint `GET /api/predictions` devolviendo JSON que pasa la validación de la plataforma, con el campo `student` igual a vuestro nombre.
 - README con decisiones tomadas y por qué.
 
 ## 7. Opcional / bonus
@@ -175,7 +175,9 @@ donde cada componente es un percentile rank cross-sectional en `[0,1]`.
 
 ### De score a probabilidad
 
-El contrato exige `probability`, y un score de ranking **no es una probabilidad**. Un `baseline_score` de 0.82 no significa 82% de probabilidad de hacer +10%.
+### De score a probabilidad
+
+El JSON semanal **no pide** `probability`. Un `baseline_score` de 0.82 no significa 82% de probabilidad de hacer +10%. Si en el informe publicáis una probabilidad, calibradla; no copiéis el score.
 
 Las tasas base reales medidas en el dataset de referencia son:
 
@@ -262,7 +264,7 @@ Universo de 10 tickers: AAPL, MSFT, NVDA, META, GOOGL, AMZN, TSLA, JPM, V, NFLX.
 - El endpoint accesible públicamente por HTTPS, respondiendo en el ciclo de recogida.
 - Documento de decisiones en Markdown dentro del repositorio.
 
-## 15. Conexión con el Value Investing Challenge
+## 15. Conexión con el LaSalle Investing
 
 La plataforma consulta vuestro endpoint una vez por ciclo, guarda la respuesta de forma inmutable con timestamp, y no la modifica jamás. Cuando el horizonte vence, calcula el retorno realizado y resuelve la predicción. Por eso la regla de arriba no es retórica: **toda predicción queda registrada antes de conocer el resultado.**
 
@@ -272,17 +274,13 @@ La plataforma consulta vuestro endpoint una vez por ciclo, guarda la respuesta d
 
 ```json
 {
-  "student_id": "student-01",
-  "model_version": "v1",
-  "model_name": "Weighted Value Score",
+  "student": "Laura García",
   "generated_at": "2026-09-14T12:00:00Z",
   "predictions": [
     {
       "ticker": "META",
       "horizon": "1W",
       "rank": 1,
-      "probability": 0.71,
-      "expected_return": 0.14,
       "target_price": 712.40,
       "investment_thesis": "optional free text",
       "risks": "optional free text"
@@ -291,6 +289,6 @@ La plataforma consulta vuestro endpoint una vez por ciclo, guarda la respuesta d
 }
 ```
 
-Reglas de validación (Zod) aplicadas por la plataforma: `horizon` ∈ {1W,1M,3M,6M}; `rank` ∈ 1..3 y único por horizonte; `probability` ∈ [0,1]; `expected_return` ∈ [-1,10]; `generated_at` debe ser un datetime ISO-8601 **con offset**; ticker en mayúsculas; sin tickers duplicados dentro del mismo horizonte; máximo 12 predicciones. **Un payload que falla la validación se rechaza por completo y esa semana el alumno no puntúa.** La guía completa está en `docs/STUDENT_INTEGRATION.md`.
+Reglas de validación (Zod) aplicadas por la plataforma: `horizon` ∈ {1W,1M,3M,6M}; `rank` ∈ 1..3 y único por horizonte; `generated_at` debe ser un datetime ISO-8601 **con offset**; ticker en mayúsculas; sin tickers duplicados dentro del mismo horizonte; máximo 12 predicciones; `student` es vuestro nombre (como os haya registrado el profesor). No enviéis `model_name`, `model_version`, `probability` ni `expected_return`. **Un payload que falla la validación se rechaza por completo y esa semana el alumno no puntúa.** La guía completa está en `docs/STUDENT_INTEGRATION.md`.
 
-En RA1 vuestro `model_version` es **`v1`**. Sus resultados quedan en el histórico y serán la referencia contra la que se medirá vuestro propio `v2` de RA2 y vuestro `v3` de RA3. El objetivo del curso no es ganar una semana: es poder responder con datos si el ML batió al scoring manual y si los agentes batieron al ML.
+En RA1 construís la primera generación de picks. Esos resultados quedan en el histórico y serán la referencia contra la que se medirá vuestro RA2 y vuestro RA3. El objetivo del curso no es ganar una semana: es poder responder con datos si el ML batió al scoring manual y si los agentes batieron al ML.

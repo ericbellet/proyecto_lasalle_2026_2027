@@ -7,7 +7,6 @@ import { CalibrationChart } from "@/components/charts/calibration-chart";
 import { ModelEvolutionChart } from "@/components/charts/model-evolution-chart";
 import { RankHistoryChart } from "@/components/charts/rank-history-chart";
 import { PredictionsTable } from "@/components/predictions/predictions-table";
-import { FilterPills } from "@/components/ui/filter-pills";
 import {
   Avatar,
   Badge,
@@ -20,7 +19,6 @@ import {
 import { HORIZONS, HORIZON_LABELS, RESEARCH_AREA_LABELS, TARGET_RETURN } from "@/config/challenge";
 import { SCORE_COMPONENT_LABELS, type ScoreComponent } from "@/config/leaderboard";
 import { getStudentDetail, getStudents } from "@/lib/data/queries";
-import { flatten, parseHorizon, type RawSearchParams } from "@/lib/data/search-params";
 import { formatDate } from "@/lib/dates";
 import { cn, pct, returnTone, signedPct } from "@/lib/utils";
 
@@ -42,35 +40,14 @@ export async function generateMetadata({
   };
 }
 
-const STATUS_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "active", label: "Active" },
-  { value: "resolved", label: "Resolved" },
-] as const;
-
 export default async function StudentPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<RawSearchParams>;
 }) {
   const { id } = await params;
-  const raw = flatten(await searchParams);
   const detail = await getStudentDetail(id);
   if (!detail) notFound();
-
-  const horizon = parseHorizon(raw.horizon);
-  const status = STATUS_OPTIONS.some((option) => option.value === raw.status)
-    ? (raw.status as "all" | "active" | "resolved")
-    : "all";
-
-  const filtered = detail.predictions.filter((prediction) => {
-    if (horizon !== "OVERALL" && prediction.horizon !== horizon) return false;
-    if (status === "active" && prediction.result) return false;
-    if (status === "resolved" && !prediction.result) return false;
-    return true;
-  });
 
   const { metrics, entry } = detail;
   const cohort = (await getStudents()).length;
@@ -118,9 +95,9 @@ export default async function StudentPage({
 
       <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
         <Stat
-          label="Score"
-          value={entry ? entry.score.toFixed(1) : "—"}
-          hint={entry?.provisional ? "Provisional" : "Blended, 0–100"}
+          label="Pts"
+          value={entry ? String(entry.score) : "—"}
+          hint={entry?.provisional ? "Provisional" : "1 per +10% hit"}
         />
         <Stat label="Hit rate" value={pct(metrics.hitRate)} hint={`${metrics.hits} of ${metrics.resolvedPredictions}`} />
         <Stat
@@ -174,8 +151,8 @@ export default async function StudentPage({
       {entry ? (
         <Panel className="overflow-hidden">
           <PanelHeader
-            title="Score breakdown"
-            description="Every component is normalised against the cohort, then weighted."
+          title="Diagnostic breakdown"
+          description="Brier, calibration and the rest stay here as analysis. They do not decide the ranking."
           />
           <ul className="grid grid-cols-1 gap-px bg-border sm:grid-cols-2 lg:grid-cols-5">
             {(Object.keys(SCORE_COMPONENT_LABELS) as ScoreComponent[]).map((component) => {
@@ -269,37 +246,13 @@ export default async function StudentPage({
 
       <Panel className="overflow-hidden">
         <PanelHeader
-          title="Predictions"
-          description={`${filtered.length} of ${detail.predictions.length} shown.`}
-          action={
-            <div className="flex flex-wrap gap-2">
-              <FilterPills
-                options={STATUS_OPTIONS}
-                active={status}
-                paramName="status"
-                searchParams={raw}
-                basePath={`/students/${id}`}
-                size="sm"
-              />
-              <FilterPills
-                options={[
-                  { value: "OVERALL", label: "All" },
-                  ...HORIZONS.map((value) => ({ value, label: value })),
-                ]}
-                active={horizon}
-                paramName="horizon"
-                searchParams={raw}
-                basePath={`/students/${id}`}
-                size="sm"
-              />
-            </div>
-          }
+          title="Picks"
+          description={`${detail.predictions.length} picks. Points are awarded when the deadline arrives, if the stock reached +${Math.round(TARGET_RETURN * 100)}%.`}
         />
         <PredictionsTable
-          predictions={filtered}
+          predictions={detail.predictions}
           show="ticker"
-          emptyTitle="Nothing matches this filter"
-          emptyDescription="Try a different horizon or status."
+          emptyTitle="No picks yet"
         />
       </Panel>
 

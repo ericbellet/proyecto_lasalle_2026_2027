@@ -1,9 +1,9 @@
 /**
- * Leaderboard scoring configuration.
+ * Diagnostic scoring configuration.
  *
- * The score is a weighted blend of five components, each normalised to [0, 1]
- * before weighting. Weights are declared once, here, and validated at module
- * load so a typo can never silently rescale the ranking.
+ * The public championship ranks students by points: 1 per stock that reached
+ * +10%. The blend below is kept for the methodology page and student profiles
+ * so Brier and calibration remain visible without deciding the ranking.
  */
 
 export type ScoreComponent =

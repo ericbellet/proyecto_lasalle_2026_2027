@@ -10,7 +10,7 @@
  * Colour carries meaning here and nothing else:
  *   positive/negative  → realized return, alpha
  *   accent             → probability and other neutral information
- *   metal              → the current leader, used once per screen at most
+ *   metal              → gold on the podium and the brand mark
  * ------------------------------------------------------------------------ */
 
 @theme {
@@ -171,14 +171,19 @@ body {
   color: transparent;
 }
 
+@utility text-metal-gradient {
+  background: linear-gradient(105deg, #fff4d0 0%, var(--color-metal) 38%, #c9a44e 72%, var(--color-fg) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 /* --------------------------------------------------------- liquid metal -- */
 
 /*
- * The champion treatment. A conic gradient slowly rotating under a highlight
- * sweep reads as brushed metal without shipping a WebGL shader, and it degrades
- * to a flat gold surface when animation is reduced.
- *
- * Used on exactly one element per page: rank #1.
+ * Brushed-metal discs for the podium. A conic gradient rotating under a
+ * highlight sweep — no WebGL. Gold, silver and bronze share the sheen;
+ * only the pigment changes.
  */
 @utility liquid-metal {
   position: relative;
@@ -197,6 +202,44 @@ body {
       #6a5320 360deg
     );
   animation: metal-rotate 9s linear infinite;
+}
+
+@utility liquid-silver {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    conic-gradient(
+      from var(--metal-angle, 0deg) at 30% 30%,
+      #5c6574 0deg,
+      #c5cdd8 50deg,
+      #f4f7fb 95deg,
+      #9aa6b5 150deg,
+      #6b7382 210deg,
+      #dde3eb 280deg,
+      #7a8494 330deg,
+      #5c6574 360deg
+    );
+  animation: metal-rotate 11s linear infinite reverse;
+}
+
+@utility liquid-bronze {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    conic-gradient(
+      from var(--metal-angle, 0deg) at 32% 28%,
+      #5a3214 0deg,
+      #c47a3a 52deg,
+      #f3c89a 95deg,
+      #a85d2a 150deg,
+      #6b3b18 215deg,
+      #d59252 285deg,
+      #7a451c 335deg,
+      #5a3214 360deg
+    );
+  animation: metal-rotate 10s linear infinite;
 }
 
 @utility liquid-metal-sheen {

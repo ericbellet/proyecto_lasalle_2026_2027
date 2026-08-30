@@ -5,8 +5,8 @@ import { failure } from "@/lib/admin/respond";
 export const dynamic = "force-dynamic";
 
 /**
- * Freezes a cycle. After this the snapshots are the official predictions and
- * a re-fetch of the same student is rejected rather than silently overwriting.
+ * Freezes snapshots that already exist. Students with no snapshot stay
+ * retryable; already-locked rows are not rewritten.
  */
 export async function POST(request: Request) {
   const auth = authorise(request);
@@ -22,7 +22,11 @@ export async function POST(request: Request) {
     return Response.json({
       ok: true,
       cycleId: body.cycleId,
-      message: `Locked ${result.snapshots} snapshot(s) in ${body.cycleId}.`,
+      pendingStudentIds: result.pendingStudentIds,
+      complete: result.complete,
+      message: result.complete
+        ? `Locked ${result.snapshots} snapshot(s) in ${body.cycleId}.`
+        : `Locked ${result.snapshots} snapshot(s) in ${body.cycleId}. Still waiting on: ${result.pendingStudentIds.join(", ") || "none"}.`,
     });
   } catch (error) {
     return failure(error);

@@ -1,6 +1,6 @@
 ---
 title: "PROJECT 3 — AI INVESTMENT AGENTS"
-subtitle: "Value Investing Challenge · RA3"
+subtitle: "LaSalle Investing · RA3"
 area: "RA3"
 ---
 
@@ -12,7 +12,7 @@ Una predicción no es "esta acción va a subir". Una predicción es: *"dada la i
 
 Ya tenéis un Data Lake (RA1), un Data Warehouse con `STOCK_FEATURES` point-in-time y modelos de ML calibrados (RA2). Ahora construís agentes de IA que enriquecen ese sistema: agentes especializados con acceso a herramientas sobre el warehouse, capaces de razonar sobre datos estructurados e información externa, coordinados por un comité de inversión que emite la predicción final.
 
-Seguís sin construir la web. La plataforma **Value Investing Challenge** consulta vuestro endpoint cada ciclo semanal, congela la respuesta de forma inmutable y os ranquea. La tarea es idéntica: **Top 3 tickers por horizonte** para `1W`, `1M`, `3M`, `6M`, **máximo 12 predicciones por ciclo**. Una predicción es **hit** cuando `realized_return >= 0.10`.
+Seguís sin construir la web. La plataforma **LaSalle Investing** consulta vuestro endpoint cada ciclo semanal, congela la respuesta de forma inmutable y os ranquea. La tarea es idéntica: **Top 3 tickers por horizonte** para `1W`, `1M`, `3M`, `6M`, **máximo 12 predicciones por ciclo**. Una predicción es **hit** cuando `realized_return >= 0.10`.
 
 En RA3 vuestro modelo se registra como **`v3`**. `v1` y `v2` permanecen intactos. El curso entero converge en una pregunta:
 
@@ -137,7 +137,7 @@ Obligatorio: al menos tres agentes especializados con tools reales sobre el ware
 - Structured output con validación contra esquema y manejo de fallos.
 - Comité que emite probabilidades para los 4 horizontes, `expected_return`, `investment_thesis` y `risks`.
 - Probabilidades ancladas en el prior del ML o en la tasa base del horizonte, con justificación.
-- Endpoint `GET /api/predictions` sirviendo `model_version: "v3"` con payload válido.
+- Endpoint `GET /api/predictions` con payload válido según el contrato (`student` = vuestro nombre).
 - Informe comparativo `v2` vs `v3` like-for-like con conclusión explícita.
 - Registro de coste y latencia por ciclo.
 
@@ -264,7 +264,7 @@ Nótese que calibración pesa un 25%: en un proyecto de agentes es probablemente
 - Informe `v2` vs `v3` en Markdown, con las tablas por horizonte.
 - Endpoint accesible por HTTPS y respondiendo durante la ventana de recogida.
 
-## 17. Conexión con el Value Investing Challenge
+## 17. Conexión con el LaSalle Investing
 
 La plataforma consulta vuestro endpoint una vez por ciclo, guarda la respuesta de forma inmutable y no la modifica jamás. Cuando el horizonte vence, calcula el retorno realizado y resuelve la predicción. **Toda predicción queda registrada antes de conocer el resultado.** Con agentes esto es una restricción de ingeniería concreta: la respuesta que sirváis en la ventana de recogida es la que se juzga, sin segunda oportunidad y sin edición posterior.
 
@@ -274,17 +274,13 @@ La plataforma consulta vuestro endpoint una vez por ciclo, guarda la respuesta d
 
 ```json
 {
-  "student_id": "student-01",
-  "model_version": "v1",
-  "model_name": "Weighted Value Score",
+  "student": "Laura García",
   "generated_at": "2026-09-14T12:00:00Z",
   "predictions": [
     {
       "ticker": "META",
       "horizon": "1W",
       "rank": 1,
-      "probability": 0.71,
-      "expected_return": 0.14,
       "target_price": 712.40,
       "investment_thesis": "optional free text",
       "risks": "optional free text"
@@ -293,8 +289,8 @@ La plataforma consulta vuestro endpoint una vez por ciclo, guarda la respuesta d
 }
 ```
 
-Reglas de validación (Zod) aplicadas por la plataforma: `horizon` ∈ {1W,1M,3M,6M}; `rank` ∈ 1..3 y único por horizonte; `probability` ∈ [0,1]; `expected_return` ∈ [-1,10]; `generated_at` debe ser un datetime ISO-8601 **con offset**; ticker en mayúsculas; sin tickers duplicados dentro del mismo horizonte; máximo 12 predicciones. **Un payload que falla la validación se rechaza por completo y esa semana el alumno no puntúa.** La guía completa está en `docs/STUDENT_INTEGRATION.md`.
+Reglas de validación (Zod) aplicadas por la plataforma: `horizon` ∈ {1W,1M,3M,6M}; `rank` ∈ 1..3 y único por horizonte; `generated_at` debe ser un datetime ISO-8601 **con offset**; ticker en mayúsculas; sin tickers duplicados dentro del mismo horizonte; máximo 12 predicciones; `student` es vuestro nombre. No enviéis `model_name`, `model_version`, `probability` ni `expected_return`. **Un payload que falla la validación se rechaza por completo y esa semana el alumno no puntúa.** La guía completa está en `docs/STUDENT_INTEGRATION.md`.
 
-En RA3 debéis enviar `model_version: "v3"`. El ejemplo de arriba es el contrato literal, que muestra `v1`; cambiad ese campo. Los campos `investment_thesis` y `risks` son opcionales en el contrato, pero en RA3 son la salida natural del comité: usadlos.
+Los campos `investment_thesis` y `risks` son opcionales en el contrato, pero en RA3 son la salida natural del comité: usadlos.
 
-La plataforma conserva `v1`, `v2` y `v3` por separado. El curso se cierra con dos respuestas empíricas: **¿el ML batió al scoring manual?** y **¿los agentes batieron al ML?** Vuestro trabajo es producir esas dos respuestas con evidencia, sea la que sea.
+Comparad en el informe RA1, RA2 y RA3. El curso se cierra con dos respuestas empíricas: **¿el ML batió al scoring manual?** y **¿los agentes batieron al ML?** Vuestro trabajo es producir esas dos respuestas con evidencia, sea la que sea.

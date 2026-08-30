@@ -10,7 +10,7 @@ export const maxDuration = 60;
  * Pulls every enabled student endpoint into the current cycle.
  *
  * The response lists each student individually — a partial success is the normal
- * outcome on a Monday morning and the administrator needs to see exactly who
+ * outcome on a Sunday evening and the administrator needs to see exactly who
  * failed and why.
  */
 export async function POST(request: Request) {

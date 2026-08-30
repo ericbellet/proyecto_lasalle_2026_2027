@@ -42,6 +42,28 @@ describe("mock dataset", () => {
     expect(dataset.predictions.some((p) => p.status === "resolved")).toBe(true);
   });
 
+  it("sets active 1W deadlines to the coming Sunday from the mock anchor", () => {
+    const active1w = dataset.predictions.filter((p) => p.horizon === "1W" && p.status === "active");
+    expect(active1w.length).toBeGreaterThan(0);
+    expect([...new Set(active1w.map((p) => p.resolutionDate))]).toEqual(["2026-08-30"]);
+  });
+
+  it("projects 1M / 3M / 6M of the current cycle from the same weekly anchor", () => {
+    const current = dataset.cycles[dataset.cycles.length - 1];
+    expect(current?.deadlineAt.startsWith("2026-08-30T21:59")).toBe(true);
+    const sample = dataset.predictions.filter((p) => p.cycleId === current?.id);
+    const byHorizon = Object.fromEntries(
+      ["1W", "1M", "3M", "6M"].map((horizon) => [
+        horizon,
+        [...new Set(sample.filter((p) => p.horizon === horizon).map((p) => p.resolutionDate))],
+      ]),
+    );
+    expect(byHorizon["1W"]).toEqual(["2026-08-30"]);
+    expect(byHorizon["1M"]).toEqual(["2026-09-22"]);
+    expect(byHorizon["3M"]).toEqual(["2026-11-23"]);
+    expect(byHorizon["6M"]).toEqual(["2027-02-22"]);
+  });
+
   it("never overwrites an older model generation", () => {
     const versions = dataset.modelVersions.filter((v) => v.studentId === "student-01");
     expect(versions.map((v) => v.version).sort()).toEqual(["v1", "v2", "v3"]);

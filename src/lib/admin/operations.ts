@@ -3,14 +3,16 @@ import "server-only";
 import { and, eq, isNull, lte, sql } from "drizzle-orm";
 
 import { db, schema } from "@/db";
-import { HORIZONS, type Horizon } from "@/config/challenge";
-import { STUDENTS, studentConfig, type StudentConfig } from "@/config/students";
-import { calculateResolutionDate, cycleIdFor, isoWeek, startOfIsoWeek, toIsoDate } from "@/lib/dates";
+import { HORIZONS, POINTS_PER_HIT, type Horizon } from "@/config/challenge";
+import type { StudentConfig } from "@/config/students";
+import { predictionsUrl } from "@/config/students";
+import { findStudent, loadRoster } from "@/lib/admin/roster";
+import { calculateResolutionDate, cycleDeadlineAt, cycleIdFor, isoWeek, startOfIsoWeek, toIsoDate } from "@/lib/dates";
 import { env } from "@/lib/env";
 import { marketDataProvider } from "@/lib/market-data";
-import { buildFieldContext, calculateLeaderboardScore, computeStudentMetrics } from "@/lib/metrics";
+import { computeStudentMetrics } from "@/lib/metrics";
 import { calculatePredictionOutcome } from "@/lib/predictions/outcome";
-import { fetchAllStudents, fetchStudent, type FetchOutcome } from "@/lib/student-api/fetcher";
+import { fetchAllStudents, fetchStudentWithRetry, type FetchOutcome } from "@/lib/student-api/fetcher";
 import {
   assertSnapshotMutable,
   ImmutableSnapshotError,
@@ -70,10 +72,10 @@ export async function createCycle(dateInput?: string): Promise<{ id: string; cre
   const id = cycleIdFor(monday);
   const { year, week } = isoWeek(monday);
 
-  // The deadline is Monday 09:00 UTC: predictions must be in before the US
-  // session opens, otherwise a student could submit knowing the day's move.
-  const deadline = new Date(monday);
-  deadline.setUTCHours(9, 0, 0, 0);
+  // Sunday 21:59 UTC (23:59 Europe/Madrid in CEST). Vercel Cron has minute
+  // precision, so 23:59:59 is not expressible. Students keep their endpoint
+  // updated during the week; this is when the platform pulls and locks.
+  const deadline = cycleDeadlineAt(monday);
 
   const existing = await client
     .select({ id: schema.predictionCycles.id })
@@ -96,12 +98,16 @@ export async function createCycle(dateInput?: string): Promise<{ id: string; cre
   return { id, created: true };
 }
 
-export async function lockCycle(cycleId: string): Promise<{ snapshots: number }> {
+export async function lockCycle(cycleId: string): Promise<{
+  snapshots: number;
+  pendingStudentIds: string[];
+  complete: boolean;
+}> {
   const client = requireDatabase("Locking a cycle");
   const now = new Date();
 
-  // Only unlocked snapshots are touched, so re-running lock is a no-op rather
-  // than a way to rewrite an earlier lock timestamp.
+  // Lock only snapshots that already exist. Students who failed to fetch have
+  // no row, so they stay retryable. Already-locked snapshots are left untouched.
   const locked = await client
     .update(schema.predictionSnapshots)
     .set({ lockedAt: now })
@@ -113,13 +119,37 @@ export async function lockCycle(cycleId: string): Promise<{ snapshots: number }>
     )
     .returning({ id: schema.predictionSnapshots.id });
 
+  const roster = await loadRoster();
+  const snapshots = await client
+    .select({
+      studentId: schema.predictionSnapshots.studentId,
+      lockedAt: schema.predictionSnapshots.lockedAt,
+    })
+    .from(schema.predictionSnapshots)
+    .where(eq(schema.predictionSnapshots.cycleId, cycleId));
+
+  const lockedIds = new Set(
+    snapshots.filter((row) => row.lockedAt != null).map((row) => row.studentId),
+  );
+  const pendingStudentIds = roster
+    .filter((student) => student.enabled && !lockedIds.has(student.id))
+    .map((student) => student.id);
+
+  const complete = pendingStudentIds.length === 0 && roster.length > 0;
   await client
     .update(schema.predictionCycles)
-    .set({ lockedAt: now, status: "locked" })
+    .set({
+      lockedAt: complete ? now : null,
+      status: complete ? "locked" : "open",
+    })
     .where(eq(schema.predictionCycles.id, cycleId));
 
-  await audit("cycle.lock", "prediction_cycle", cycleId, { snapshots: locked.length });
-  return { snapshots: locked.length };
+  await audit("cycle.lock", "prediction_cycle", cycleId, {
+    snapshots: locked.length,
+    pending: pendingStudentIds,
+    complete,
+  });
+  return { snapshots: locked.length, pendingStudentIds, complete };
 }
 
 /** ------------------------------------------------------- fetch + snapshot */
@@ -139,9 +169,10 @@ export interface StoreResult extends FetchOutcome {
 export async function fetchAndStore(
   student: StudentConfig,
   cycleId: string,
+  prefetched?: FetchOutcome,
 ): Promise<StoreResult> {
   const client = requireDatabase("Fetching a student");
-  const outcome = await fetchStudent(student);
+  const outcome = prefetched ?? (await fetchStudentWithRetry(student));
 
   await client
     .update(schema.studentIntegrations)
@@ -182,8 +213,6 @@ export async function fetchAndStore(
   const predictionDate = toIsoDate(new Date());
   const payload = outcome.payload;
 
-  const modelVersionId = await ensureModelVersion(student.id, payload.model_version, payload.model_name ?? null);
-
   await client.transaction(async (tx) => {
     await tx
       .insert(schema.predictionSnapshots)
@@ -191,7 +220,7 @@ export async function fetchAndStore(
         id: snapshotId,
         studentId: student.id,
         cycleId,
-        modelVersionId,
+        modelVersionId: null,
         rawPayload: outcome.rawBody as never,
         payloadHash: outcome.payloadHash as string,
         fetchedAt: new Date(outcome.fetchedAt),
@@ -202,7 +231,7 @@ export async function fetchAndStore(
           rawPayload: outcome.rawBody as never,
           payloadHash: outcome.payloadHash as string,
           fetchedAt: new Date(outcome.fetchedAt),
-          modelVersionId,
+          modelVersionId: null,
         },
       });
 
@@ -216,12 +245,12 @@ export async function fetchAndStore(
         snapshotId,
         studentId: student.id,
         cycleId,
-        modelVersionId,
+        modelVersionId: null,
         ticker: item.ticker,
         horizon: item.horizon,
         rank: item.rank,
-        probability: item.probability,
-        expectedReturn: item.expected_return,
+        probability: 0,
+        expectedReturn: 0,
         targetPrice: item.target_price ?? null,
         investmentThesis: item.investment_thesis ?? null,
         risks: item.risks ?? null,
@@ -248,16 +277,18 @@ export async function fetchAndStore(
 export async function fetchAllAndStore(cycleId: string): Promise<StoreResult[]> {
   requireDatabase("Fetching all students");
 
-  const enabled = STUDENTS.filter((student) => student.enabled);
+  const enabled = await loadRoster();
   const results: StoreResult[] = [];
 
-  // `fetchAllStudents` already bounds concurrency on the network side; the
-  // writes are then sequential so one slow transaction cannot exhaust the pool.
+  // `fetchAllStudents` already retries and bounds concurrency on the network
+  // side; the writes are then sequential so one slow transaction cannot exhaust
+  // the pool. Prefetch outcomes are passed through so nobody is fetched twice.
   const outcomes = await fetchAllStudents(enabled);
+  const byId = new Map(enabled.map((student) => [student.id, student]));
   for (const outcome of outcomes) {
-    const student = studentConfig(outcome.studentId);
+    const student = byId.get(outcome.studentId);
     if (!student) continue;
-    results.push(await fetchAndStore(student, cycleId));
+    results.push(await fetchAndStore(student, cycleId, outcome));
   }
 
   await audit("cycle.fetch_all", "prediction_cycle", cycleId, {
@@ -268,27 +299,106 @@ export async function fetchAllAndStore(cycleId: string): Promise<StoreResult[]> 
   return results;
 }
 
-async function ensureModelVersion(
-  studentId: string,
-  version: string,
-  name: string | null,
-): Promise<string> {
+/**
+ * Re-fetches students who still have no locked snapshot in this cycle.
+ *
+ * Successful classmates stay frozen. A later retry cannot overwrite them.
+ */
+export async function retryFailedStudents(cycleId?: string): Promise<{
+  cycleId: string;
+  attempted: string[];
+  results: StoreResult[];
+  lock: Awaited<ReturnType<typeof lockCycle>>;
+}> {
+  requireDatabase("Retrying failed students");
+  const { id } = cycleId ? { id: cycleId } : await createCycle();
+  const pending = await pendingStudentIds(id);
+  const results: StoreResult[] = [];
+
+  for (const studentId of pending) {
+    const student = await findStudent(studentId);
+    if (!student?.enabled) continue;
+    results.push(await fetchAndStore(student, id));
+  }
+
+  const lock = await lockCycle(id);
+  await audit("cycle.retry_failed", "prediction_cycle", id, {
+    attempted: pending,
+    stored: results.filter((result) => result.stored).length,
+  });
+
+  return { cycleId: id, attempted: pending, results, lock };
+}
+
+async function pendingStudentIds(cycleId: string): Promise<string[]> {
   const client = db();
-  const id = `${studentId}-${version}`;
-
-  await client
-    .insert(schema.modelVersions)
-    .values({
-      id,
-      studentId,
-      version,
-      name: name ?? version,
-      researchArea: "RA1",
-      approach: "",
+  const roster = await loadRoster();
+  const snapshots = await client
+    .select({
+      studentId: schema.predictionSnapshots.studentId,
+      lockedAt: schema.predictionSnapshots.lockedAt,
     })
-    .onConflictDoNothing({ target: schema.modelVersions.id });
+    .from(schema.predictionSnapshots)
+    .where(eq(schema.predictionSnapshots.cycleId, cycleId));
 
-  return id;
+  const lockedIds = new Set(
+    snapshots.filter((row) => row.lockedAt != null).map((row) => row.studentId),
+  );
+  return roster.filter((student) => student.enabled && !lockedIds.has(student.id)).map((student) => student.id);
+}
+
+export async function getRosterStatus(cycleId?: string): Promise<{
+  cycleId: string;
+  pendingStudentIds: string[];
+  students: Array<{
+    id: string;
+    name: string;
+    handle: string;
+    url: string;
+    enabled: boolean;
+    lastStatus: string;
+    lastError: string | null;
+    lastFetchAt: string | null;
+    snapshotLocked: boolean;
+    hasSnapshot: boolean;
+  }>;
+}> {
+  const client = requireDatabase("Listing student endpoints");
+  const id = cycleId ?? cycleIdFor(startOfIsoWeek(new Date()));
+  const roster = await loadRoster({ enabledOnly: false });
+  const pending = await pendingStudentIds(id);
+
+  const integrations = await client.select().from(schema.studentIntegrations);
+  const integrationById = new Map(integrations.map((row) => [row.studentId, row]));
+  const snapshots = await client
+    .select({
+      studentId: schema.predictionSnapshots.studentId,
+      lockedAt: schema.predictionSnapshots.lockedAt,
+    })
+    .from(schema.predictionSnapshots)
+    .where(eq(schema.predictionSnapshots.cycleId, id));
+  const snapshotById = new Map(snapshots.map((row) => [row.studentId, row]));
+
+  return {
+    cycleId: id,
+    pendingStudentIds: pending,
+    students: roster.map((student) => {
+      const integration = integrationById.get(student.id);
+      const snapshot = snapshotById.get(student.id);
+      return {
+        id: student.id,
+        name: student.name,
+        handle: student.handle,
+        url: predictionsUrl(student),
+        enabled: student.enabled,
+        lastStatus: integration?.lastStatus ?? "unknown",
+        lastError: integration?.lastError ?? null,
+        lastFetchAt: integration?.lastFetchAt ? integration.lastFetchAt.toISOString() : null,
+        snapshotLocked: snapshot?.lockedAt != null,
+        hasSnapshot: Boolean(snapshot),
+      };
+    }),
+  };
 }
 
 /** -------------------------------------------------------------- resolution */
@@ -428,7 +538,6 @@ export async function recalculateLeaderboard(cycleId: string): Promise<{ student
     result: result ? { ...result, resolvedAt: result.resolvedAt.toISOString() } : null,
   }));
 
-  const field = buildFieldContext(joined);
   const byStudent = new Map<string, ResolvedPrediction[]>();
   for (const prediction of joined) {
     const bucket = byStudent.get(prediction.studentId) ?? [];
@@ -439,9 +548,12 @@ export async function recalculateLeaderboard(cycleId: string): Promise<{ student
   const scored = [...byStudent.entries()]
     .map(([studentId, own]) => {
       const metrics = computeStudentMetrics(studentId, own);
-      return { studentId, metrics, score: calculateLeaderboardScore(metrics, own, field).score };
+      return { studentId, metrics, score: metrics.hits * POINTS_PER_HIT };
     })
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return b.metrics.hitRate - a.metrics.hitRate;
+    });
 
   await client.transaction(async (tx) => {
     await tx
@@ -465,6 +577,55 @@ export async function recalculateLeaderboard(cycleId: string): Promise<{ student
     students: scored.length,
   });
   return { students: scored.length };
+}
+
+export interface NightlyJobResult {
+  resolved: Awaited<ReturnType<typeof resolveDuePredictions>>;
+  weekly: {
+    ran: boolean;
+    cycleId?: string;
+    created?: boolean;
+    fetched?: number;
+    stored?: number;
+    locked?: number;
+    pendingStudentIds?: string[];
+    complete?: boolean;
+  };
+}
+
+/**
+ * Weekly Sunday job (`59 21 * * 0` = 21:59 UTC = 23:59 Europe/Madrid in CEST).
+ *
+ * Always:
+ *   1. Resolve every pick whose `resolutionDate` is today or earlier (1W, 1M,
+ *      3M and 6M). Longer horizons score on the first Sunday after they mature.
+ *   2. Open the week's cycle, pull every student endpoint (with retries), store
+ *      valid snapshots, and lock the successes. Failures stay unlocked so
+ *      `/api/admin/retry-failed` can fill them in without touching the others.
+ *
+ * The cron only fires on Sunday, so both steps always run. `isSunday` is kept
+ * as a sanity check on the clock, not as a skip for the weekly pull.
+ */
+export async function runNightlyJob(now = new Date()): Promise<NightlyJobResult> {
+  const resolved = await resolveDuePredictions(now);
+
+  const { id: cycleId, created } = await createCycle(toIsoDate(now));
+  const results = await fetchAllAndStore(cycleId);
+  const lock = await lockCycle(cycleId);
+
+  return {
+    resolved,
+    weekly: {
+      ran: true,
+      cycleId,
+      created,
+      fetched: results.length,
+      stored: results.filter((result) => result.stored).length,
+      locked: lock.snapshots,
+      pendingStudentIds: lock.pendingStudentIds,
+      complete: lock.complete,
+    },
+  };
 }
 
 /** Horizons exported for the admin UI so its labels cannot drift from the rules. */

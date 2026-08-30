@@ -38,8 +38,7 @@ export async function POST(request: Request) {
     {
       ok: true,
       accepted: false,
-      studentId: validated.payload.student_id,
-      modelVersion: validated.payload.model_version,
+      studentId: validated.payload.student,
       predictions: validated.payload.predictions.length,
       message:
         "Payload is valid. Push submissions are not yet recorded — register your endpoint with the professor and the platform will pull it at the deadline.",

@@ -16,7 +16,10 @@ import { env } from "@/lib/env";
 export type AuthResult = { ok: true } | { ok: false; status: 401 | 503; message: string };
 
 export function authorise(request: Request): AuthResult {
-  if (!env.adminToken) {
+  const accepted = [env.cronSecret, env.adminToken].filter(
+    (value): value is string => Boolean(value),
+  );
+  if (accepted.length === 0) {
     return {
       ok: false,
       status: 503,
@@ -27,8 +30,7 @@ export function authorise(request: Request): AuthResult {
 
   const header = request.headers.get("authorization") ?? "";
   const provided = header.startsWith("Bearer ") ? header.slice(7) : "";
-
-  if (!provided || !timingSafeEqual(provided, env.adminToken)) {
+  if (!provided || !accepted.some((token) => timingSafeEqual(provided, token))) {
     return { ok: false, status: 401, message: "Invalid or missing admin token." };
   }
 

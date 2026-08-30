@@ -1,4 +1,4 @@
-# Value Investing Challenge
+# LaSalle Investing
 
 A university competition where students build data lakes, machine learning models and AI agent systems — and this platform scores whether their stock predictions actually beat the market.
 
@@ -65,22 +65,19 @@ GET /api/predictions
 
 ```json
 {
-  "student_id": "student-01",
-  "model_version": "v2",
+  "student": "Laura García",
   "generated_at": "2026-09-14T12:00:00Z",
   "predictions": [
     {
       "ticker": "META",
       "horizon": "1W",
-      "rank": 1,
-      "probability": 0.71,
-      "expected_return": 0.14
+      "rank": 1
     }
   ]
 }
 ```
 
-Rules: max 12 picks (top 3 × 4 horizons), unique rank per horizon, probability in `[0, 1]`, `generated_at` with a timezone offset. Invalid payloads are rejected entirely.
+Rules: max 12 picks (top 3 × 4 horizons), unique rank per horizon, `generated_at` with a timezone offset. The `student` field is the person's name, matching the roster. Invalid payloads are rejected entirely.
 
 Full walkthrough: [docs/STUDENT_INTEGRATION.md](docs/STUDENT_INTEGRATION.md).
 
@@ -88,15 +85,16 @@ There is also a future push path at `POST /api/submissions`. The MVP prefers pul
 
 ## How prediction cycles work
 
-Cycles are ISO weeks (`2026-W01`, `2026-W02`, …). On Monday the platform:
+Cycles are ISO weeks (`2026-W01`, `2026-W02`, …). Every **Sunday at 23:59 Europe/Madrid** (21:59 UTC in CEST; Vercel Cron `59 21 * * 0`) the platform:
 
-1. Fetches every enabled student endpoint
-2. Validates the payload with Zod
-3. Stores the raw JSON as a snapshot
-4. Normalises the 12 picks
-5. Locks the cycle
+1. Resolves every pick whose `resolutionDate` has already passed (1W, 1M, 3M, 6M). Longer horizons are scored the first Sunday after they mature.
+2. Fetches every enabled student endpoint (3 retries with backoff on timeouts / HTTP errors)
+3. Validates the payload with Zod
+4. Stores the raw JSON as a snapshot
+5. Normalises the 12 picks
+6. Locks **successful** snapshots. Students whose URL was down stay unlocked so `POST /api/admin/retry-failed` can fill them in without touching the others.
 
-Previous weeks are never deleted.
+Previous weeks are never deleted. The job is weekly, not nightly — Hobby cron includes this (typically up to 2 jobs, minimum once per day; weekly is fine).
 
 ## How snapshots work
 
@@ -125,7 +123,7 @@ Students with fewer than 12 resolved predictions appear as **provisional** and d
 
 ## How results are resolved
 
-`calculateResolutionDate()` projects the horizon in calendar days and snaps forward to the next market session.
+`calculateResolutionDate()` projects the horizon in calendar days and snaps forward to the next market session. The Sunday job then scores every pick whose date has already passed — so a 1M pick that matures on a Wednesday is resolved the following Sunday.
 
 When that date arrives, `MockMarketDataProvider` or `YahooFinanceProvider` supplies the two closes. The official outcome is close-to-close, not the intraday high.
 
@@ -273,6 +271,6 @@ Output: `docs/projects/*.pdf`.
 - Persist student roster fully in Postgres instead of `config/students.ts`
 - Trading-calendar library instead of a hand-maintained holiday list
 - Live Yahoo / Alpha Vantage / Finnhub providers behind the same interface
-- Scheduled Monday fetch via Vercel cron
+- Scheduled Sunday 23:59 Europe/Madrid fetch via Vercel cron (`59 21 * * 0`)
 - Push-submission auth that students can use from CI
 - Parquet export of the teaching dataset for the Spark labs

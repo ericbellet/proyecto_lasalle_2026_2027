@@ -21,8 +21,6 @@ export const predictionItemSchema = z.object({
   ticker: tickerSchema,
   horizon: z.enum(HORIZONS),
   rank: z.number().int().min(1).max(PICKS_PER_HORIZON),
-  probability: z.number().min(0).max(1),
-  expected_return: z.number().min(-1).max(10),
   target_price: z.number().positive().nullish(),
   investment_thesis: z.string().max(2000).nullish(),
   risks: z.string().max(2000).nullish(),
@@ -30,11 +28,23 @@ export const predictionItemSchema = z.object({
 
 export type StudentPredictionItem = z.infer<typeof predictionItemSchema>;
 
+/** Fold accents and spacing so "Sofía Ramírez" matches "Sofia  Ramirez". */
+export function normaliseStudentName(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+export function studentNamesMatch(declared: string, registered: string): boolean {
+  return normaliseStudentName(declared) === normaliseStudentName(registered);
+}
+
 export const studentPayloadSchema = z
   .object({
-    student_id: z.string().trim().min(1),
-    model_version: z.string().trim().min(1).max(40),
-    model_name: z.string().trim().max(120).nullish(),
+    student: z.string().trim().min(1).max(120),
     generated_at: z.string().datetime({ offset: true }),
     predictions: z.array(predictionItemSchema).min(1).max(HORIZONS.length * PICKS_PER_HORIZON),
   })
@@ -103,13 +113,11 @@ export function summariseIssues(issues: ContractIssue[]): string {
 
 /** Example payload rendered in the docs and in the integration panel. */
 export const EXAMPLE_PAYLOAD: StudentPayload = {
-  student_id: "student-01",
-  model_version: "v2",
-  model_name: "XGBoost multi-horizon",
+  student: "Laura García",
   generated_at: "2026-09-14T12:00:00Z",
   predictions: [
-    { ticker: "META", horizon: "1W", rank: 1, probability: 0.71, expected_return: 0.14 },
-    { ticker: "NVDA", horizon: "1W", rank: 2, probability: 0.68, expected_return: 0.13 },
-    { ticker: "AAPL", horizon: "1W", rank: 3, probability: 0.55, expected_return: 0.11 },
+    { ticker: "META", horizon: "1W", rank: 1 },
+    { ticker: "NVDA", horizon: "1W", rank: 2 },
+    { ticker: "AAPL", horizon: "1W", rank: 3 },
   ],
 };

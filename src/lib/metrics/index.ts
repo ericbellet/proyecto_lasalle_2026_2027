@@ -273,10 +273,11 @@ export function brierSkillScore(
 }
 
 /**
- * Blend the five normalised components into the headline 0–100 score.
+ * Blend the five normalised components into a diagnostic 0–100 score.
  *
- * Each component is centred on 0.5 at the cohort average, so a student who is
- * exactly average lands near 50 and the spread across the class fills the range.
+ * This does not decide the public ranking. Championship order is points:
+ * one per pick that hit +10%. The blend stays on student profiles and the
+ * methodology page so calibration and sample size remain visible.
  */
 export function calculateLeaderboardScore(
   metrics: StudentMetrics,

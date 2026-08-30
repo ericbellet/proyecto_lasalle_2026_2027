@@ -45,7 +45,7 @@ export const viewport: Viewport = {
  * Applied before first paint so a light-theme user never sees a dark flash.
  * Kept as a raw string because it must run ahead of hydration.
  */
-const themeBootstrap = `try{var t=localStorage.getItem("vic-theme");if(t==="light"||t==="dark"){document.documentElement.dataset.theme=t}}catch(e){}`;
+const themeBootstrap = `try{var t=localStorage.getItem("lasalle-theme");if(t==="light"||t==="dark"){document.documentElement.dataset.theme=t}}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

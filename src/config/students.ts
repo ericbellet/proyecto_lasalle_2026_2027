@@ -1,9 +1,9 @@
 /**
  * The class roster.
  *
- * Adding a student is a three-line edit here — no migration, no admin UI. When
- * the course outgrows a file the same shape moves into the `students` and
- * `student_integrations` tables without touching any calling code.
+ * In live mode the professor registers each student's predictions URL on
+ * `/integrate` (stored in `students` + `student_integrations`). This file is
+ * only a fallback when the database has no integrations yet.
  */
 
 export interface StudentConfig {

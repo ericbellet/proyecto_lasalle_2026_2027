@@ -35,7 +35,7 @@ export function GET() {
               fontWeight: 700,
             }}
           >
-            V
+            L
           </div>
           <div style={{ color: "#949db4", fontSize: 24, letterSpacing: 2 }}>
             {site.shortName}

@@ -16,6 +16,20 @@ export const HORIZON_CALENDAR_DAYS: Record<Horizon, number> = {
   "6M": 182,
 };
 
+/**
+ * Weekly job instant. Vercel Cron is UTC with minute precision (no seconds):
+ * 23:59 Europe/Madrid in CEST (UTC+2) is 21:59 UTC → `59 21 * * 0`.
+ *
+ * The job is weekly, not nightly. 1M / 3M / 6M picks are scored the first
+ * Sunday after their calendar `resolutionDate` has passed — the same run
+ * checks every due pick, not only 1W.
+ */
+export const WEEKLY_LOCK = {
+  utcDay: 0,
+  utcHour: 21,
+  utcMinute: 59,
+} as const;
+
 export const HORIZON_LABELS: Record<Horizon, string> = {
   "1W": "1 Week",
   "1M": "1 Month",
@@ -25,9 +39,12 @@ export const HORIZON_LABELS: Record<Horizon, string> = {
 
 /**
  * A prediction is a "hit" when the realized return reaches this threshold.
- * The whole scoring system is built around this single number.
+ * The public ranking is built around this single number: one point per hit.
  */
 export const TARGET_RETURN = 0.1;
+
+/** Championship points awarded when a pick hits the target. */
+export const POINTS_PER_HIT = 1;
 
 /** Top N tickers a student submits per horizon, per cycle. */
 export const PICKS_PER_HORIZON = 3;
@@ -63,10 +80,14 @@ export const LEADERBOARD_WINDOWS = [
 
 export type LeaderboardWindowId = (typeof LEADERBOARD_WINDOWS)[number]["id"];
 
+/** Championship and student pages default to the full record. */
 export const DEFAULT_WINDOW: LeaderboardWindowId = "all-time";
 
+/** The pick-by-pick board defaults to the current cycle so it stays readable. */
+export const LEADERBOARD_DEFAULT_WINDOW: LeaderboardWindowId = "this-week";
+
 export const CHALLENGE = {
-  name: "Value Investing Challenge",
+  name: "LaSalle Investing",
   tagline: "Can data, machine learning and AI agents consistently beat the market?",
   targetReturn: TARGET_RETURN,
   picksPerHorizon: PICKS_PER_HORIZON,
