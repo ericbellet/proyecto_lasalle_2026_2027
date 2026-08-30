@@ -6,7 +6,7 @@ import { env } from "@/lib/env";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const staticRoutes = ["", "/leaderboard", "/students", "/integrate"];
+  const staticRoutes = ["", "/leaderboard", "/students", "/features", "/integrate"];
   const students = env.mockMode ? (await getDataset()).students : [];
 
   return [

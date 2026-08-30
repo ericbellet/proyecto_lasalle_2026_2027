@@ -5,6 +5,7 @@ import { ProfessorPanel } from "@/components/integrate/professor-panel";
 import { CodeBlock } from "@/components/ui/code-block";
 import {
   Badge,
+  LinkButton,
   Panel,
   PanelHeader,
   SectionHeading,
@@ -99,6 +100,11 @@ export default function IntegratePage() {
         eyebrow="For students"
         title="Connect your model"
         description="You build the data lake, the warehouse, the models and the agents. The only thing this platform needs from you is one URL that returns JSON."
+        action={
+          <LinkButton href="/features" variant="secondary" size="sm">
+            Feature catalog
+          </LinkButton>
+        }
       />
 
       <ol className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-5">

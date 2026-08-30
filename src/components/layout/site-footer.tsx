@@ -34,6 +34,11 @@ export function SiteFooter() {
             </Link>
           </li>
           <li>
+            <Link href="/features" className="text-xs text-fg-muted transition-colors hover:text-fg">
+              Features
+            </Link>
+          </li>
+          <li>
             <Link href="/integrate" className="text-xs text-fg-muted transition-colors hover:text-fg">
               Integration
             </Link>
