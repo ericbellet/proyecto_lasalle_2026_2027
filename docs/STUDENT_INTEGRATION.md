@@ -4,11 +4,18 @@ You do not build the website. You build a system that can answer one HTTP reques
 
 Time needed: about ten minutes once your model can produce a shortlist.
 
-## 1. Deploy an API
+## 1. Start from the class template (Copier)
 
-Anywhere with a public HTTPS URL works. Vercel, Render, Railway, or your laptop during development.
+The dummy API (`eric-bellet-predictions`) is Eric Bellet's live example. Generate **your** project so the `student` field is your name:
 
-The professor platform only stores your URL. It never clones your repo.
+```bash
+uvx copier copy gh:ericbellet/eric-bellet-predictions ./mi-predicciones
+cd mi-predicciones
+```
+
+Choose Next.js (Vercel) or FastAPI + UV. Copier fills 12 starting tickers; swap them for your model before Sunday lock.
+
+Then deploy anywhere with a public HTTPS URL. The professor platform only stores that URL. It never clones your repo.
 
 ## 2. Implement `GET /api/predictions`
 

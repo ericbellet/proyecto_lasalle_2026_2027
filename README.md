@@ -57,7 +57,13 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the mermaid diagram and tab
 
 ## Student integration contract
 
-Each student deploys any HTTPS endpoint and sends the professor a URL.
+Each student deploys any HTTPS endpoint and sends the professor a URL. The fastest start is the Copier template in the dummy repo:
+
+```bash
+uvx copier copy gh:ericbellet/eric-bellet-predictions ./mi-predicciones
+```
+
+See [docs/STUDENT_INTEGRATION.md](docs/STUDENT_INTEGRATION.md).
 
 ```http
 GET /api/predictions

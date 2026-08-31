@@ -36,6 +36,8 @@ export async function GET() {
     databaseHost: hostOf(databaseUrl),
     databasePort: portOf(databaseUrl),
     marketDataProvider: env.marketDataProvider,
+    hasAdminToken: Boolean(env.adminToken),
+    hasCronSecret: Boolean(env.cronSecret),
     db,
     dbError,
     ms: Date.now() - started,

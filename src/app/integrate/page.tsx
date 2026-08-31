@@ -109,9 +109,9 @@ export default function IntegratePage() {
 
       <ol className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
         {[
-          "Deploy your system somewhere with a public HTTPS URL.",
-          "Implement GET /api/predictions.",
-          "Return the JSON schema below.",
+          "Copy the class template with Copier (or deploy any public HTTPS URL).",
+          "Implement GET /api/predictions — start from the dummy shortlist, then plug in your model.",
+          "Return the JSON schema below. student must match the roster name.",
           "Send the professor your base URL — they register it; you do not log in here.",
           "Watch yourself appear on the leaderboard.",
         ].map((step, index) => (
@@ -163,6 +163,21 @@ export default function IntegratePage() {
             </TableShell>
           </Panel>
         </div>
+      </section>
+
+      <section>
+        <SectionHeading
+          eyebrow="Template"
+          title="Copy the dummy, then make it yours"
+          description="The live Eric Bellet API is the example. Copier asks for your name, Next.js or FastAPI, and 12 starting tickers. Do not deploy that repo unchanged — the student field would still say Eric Bellet."
+        />
+        <CodeBlock
+          label="uvx copier"
+          code={`uvx copier copy gh:ericbellet/eric-bellet-predictions ./mi-predicciones
+cd mi-predicciones
+# Next.js:  npm install && npm run dev && npx vercel
+# FastAPI:  uv sync && uv run uvicorn app:app --reload`}
+        />
       </section>
 
       <section>
