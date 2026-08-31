@@ -173,8 +173,8 @@ export default function IntegratePage() {
         />
         <CodeBlock
           label="uvx copier"
-          code={`uvx copier copy gh:ericbellet/eric-bellet-predictions ./mi-predicciones
-cd mi-predicciones
+          code={`uvx copier copy gh:ericbellet/eric-bellet-predictions ./my-predictions
+cd my-predictions
 # Next.js:  npm install && npm run dev && npx vercel
 # FastAPI:  uv sync && uv run uvicorn app:app --reload`}
         />

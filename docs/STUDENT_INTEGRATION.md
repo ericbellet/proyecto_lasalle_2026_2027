@@ -9,8 +9,8 @@ Time needed: about ten minutes once your model can produce a shortlist.
 The dummy API (`eric-bellet-predictions`) is Eric Bellet's live example. Generate **your** project so the `student` field is your name:
 
 ```bash
-uvx copier copy gh:ericbellet/eric-bellet-predictions ./mi-predicciones
-cd mi-predicciones
+uvx copier copy gh:ericbellet/eric-bellet-predictions ./my-predictions
+cd my-predictions
 ```
 
 Choose Next.js (Vercel) or FastAPI + UV. Copier fills 12 starting tickers; swap them for your model before Sunday lock.

@@ -60,7 +60,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the mermaid diagram and tab
 Each student deploys any HTTPS endpoint and sends the professor a URL. The fastest start is the Copier template in the dummy repo:
 
 ```bash
-uvx copier copy gh:ericbellet/eric-bellet-predictions ./mi-predicciones
+uvx copier copy gh:ericbellet/eric-bellet-predictions ./my-predictions
 ```
 
 See [docs/STUDENT_INTEGRATION.md](docs/STUDENT_INTEGRATION.md).

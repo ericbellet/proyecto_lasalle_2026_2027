@@ -61,7 +61,7 @@ Vosotros decidís proveedores de datos, qué campos ingerir, la estrategia de ca
 3. **Almacenamiento columnar particionado** en Parquet o Delta.
 4. **Controles de calidad ejecutables** que emitan un informe (filas leídas, filas rechazadas, nulos por columna, duplicados detectados).
 5. **Baseline Investment Score** con pesos documentados y justificados.
-6. **Endpoint `GET /api/predictions`** que devuelva JSON válido según el contrato, con vuestro **nombre** en el campo `student`. Plantilla: `uvx copier copy gh:ericbellet/eric-bellet-predictions ./mi-predicciones`.
+6. **Endpoint `GET /api/predictions`** que devuelva JSON válido según el contrato, con vuestro **nombre** en el campo `student`. Plantilla: `uvx copier copy gh:ericbellet/eric-bellet-predictions ./my-predictions`.
 
 ### Datos a los que aspirar
 
