@@ -41,4 +41,24 @@ describe("validateInfluencerFeed", () => {
   it("does not invent a student payload when the video had no picks", () => {
     expect(influencerToStudentPayload(feed.influencers[1]!)).toBeNull();
   });
+
+  it("accepts a per-channel error and refuses to store that week", () => {
+    const result = validateInfluencerFeed({
+      generated_at: "2026-09-06T12:00:00Z",
+      error: "One or more YouTube channel queries failed",
+      influencers: [
+        {
+          name: "Arte de Invertir",
+          handle: "artedeinvertir",
+          generated_at: "2026-09-06T10:00:00Z",
+          predictions: [{ ticker: "AAPL", horizon: "1W", rank: 1 }],
+          error: "YouTube RSS 503",
+        },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.feed.error).toContain("YouTube");
+    expect(influencerToStudentPayload(result.feed.influencers[0]!)).toBeNull();
+  });
 });

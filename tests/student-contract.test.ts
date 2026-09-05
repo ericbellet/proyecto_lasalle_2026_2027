@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   EXAMPLE_PAYLOAD,
   normaliseStudentName,
+  reportedQueryError,
   studentNamesMatch,
   validateStudentPayload,
 } from "@/lib/validation/student-contract";
@@ -97,6 +98,14 @@ describe("validateStudentPayload", () => {
     }));
     const result = validateStudentPayload({ ...valid, predictions });
     expect(result.ok).toBe(false);
+  });
+});
+
+describe("reportedQueryError", () => {
+  it("reads a non-empty error field from a student or influencer body", () => {
+    expect(reportedQueryError({ error: "Yahoo Finance timeout" })).toBe("Yahoo Finance timeout");
+    expect(reportedQueryError({ student: "Laura", error: "  " })).toBeNull();
+    expect(reportedQueryError({ student: "Laura" })).toBeNull();
   });
 });
 

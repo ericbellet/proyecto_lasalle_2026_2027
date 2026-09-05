@@ -35,6 +35,7 @@ const FIELDS = [
   ["predictions[].target_price", "number", "no", "Price you expect at the horizon."],
   ["predictions[].investment_thesis", "string", "no", "Up to 2000 characters. Shown on the prediction page."],
   ["predictions[].risks", "string", "no", "Up to 2000 characters. What would make you wrong."],
+  ["error", "string", "no", "If your query failed (Yahoo, your model, a timeout), return it here. The professor Errors page stores it. Do not invent tickers to hide the failure."],
 ] as const;
 
 const PYTHON_EXAMPLE = `# FastAPI — deploy anywhere that gives you a public HTTPS URL

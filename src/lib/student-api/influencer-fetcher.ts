@@ -6,7 +6,7 @@ import {
   validateInfluencerFeed,
   type InfluencerFeed,
 } from "@/lib/validation/influencer-contract";
-import { summariseIssues, type ContractIssue } from "@/lib/validation/student-contract";
+import { reportedQueryError, summariseIssues, type ContractIssue } from "@/lib/validation/student-contract";
 
 export interface InfluencerFeedOutcome {
   url: string;
@@ -64,16 +64,7 @@ export async function fetchInfluencerFeed(options?: { timeoutMs?: number }): Pro
       };
     }
 
-    if (!response.ok) {
-      return {
-        ...base,
-        latencyMs,
-        httpStatus: response.status,
-        rawBody: body,
-        error: `HTTP ${response.status} ${response.statusText}`.trim(),
-      };
-    }
-
+    const reported = reportedQueryError(body);
     const validated = validateInfluencerFeed(body);
     if (!validated.ok) {
       return {
@@ -82,7 +73,11 @@ export async function fetchInfluencerFeed(options?: { timeoutMs?: number }): Pro
         httpStatus: response.status,
         rawBody: body,
         issues: validated.issues,
-        error: summariseIssues(validated.issues),
+        error:
+          reported ??
+          (!response.ok
+            ? `HTTP ${response.status} ${response.statusText}`.trim()
+            : summariseIssues(validated.issues)),
       };
     }
 
@@ -92,7 +87,7 @@ export async function fetchInfluencerFeed(options?: { timeoutMs?: number }): Pro
       httpStatus: response.status,
       rawBody: body,
       feed: validated.feed,
-      error: null,
+      error: reported ?? validated.feed.error ?? null,
     };
   } catch (error) {
     const latencyMs = Date.now() - startedAt;

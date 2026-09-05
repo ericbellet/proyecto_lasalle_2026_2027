@@ -14,10 +14,12 @@ export const influencerItemSchema = z.object({
   channel_url: z.string().url().optional(),
   generated_at: z.string().datetime({ offset: true }),
   predictions: z.array(predictionItemSchema).max(12),
+  error: z.string().trim().max(2000).nullish(),
 });
 
 export const influencerFeedSchema = z.object({
   generated_at: z.string().datetime({ offset: true }),
+  error: z.string().trim().max(2000).nullish(),
   influencers: z.array(influencerItemSchema).min(1).max(40),
 });
 
@@ -42,6 +44,7 @@ export function validateInfluencerFeed(input: unknown): FeedResult {
 
 /** Reuse the student snapshot writer when the influencer actually has picks. */
 export function influencerToStudentPayload(item: InfluencerItem): StudentPayload | null {
+  if (item.error) return null;
   if (item.predictions.length === 0) return null;
   const parsed = studentPayloadSchema.safeParse({
     student: item.name,

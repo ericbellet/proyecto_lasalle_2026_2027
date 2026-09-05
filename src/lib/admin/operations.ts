@@ -16,6 +16,7 @@ import { env } from "@/lib/env";
 import { marketDataProvider } from "@/lib/market-data";
 import { computeStudentMetrics } from "@/lib/metrics";
 import { calculatePredictionOutcome } from "@/lib/predictions/outcome";
+import { recordQueryAttempt } from "@/lib/admin/query-attempts";
 import { fetchAllStudents, fetchStudentWithRetry, type FetchOutcome } from "@/lib/student-api/fetcher";
 import { studentNamesMatch } from "@/lib/validation/student-contract";
 import {
@@ -189,6 +190,22 @@ export async function fetchAndStore(
     })
     .where(eq(schema.studentIntegrations.studentId, student.id));
 
+  await recordQueryAttempt({
+    source: isInfluencer(student) ? "influencer_channel" : "student_endpoint",
+    subjectId: student.id,
+    subjectName: student.name,
+    kind: isInfluencer(student) ? "influencer" : "student",
+    cycleId,
+    url: outcome.url,
+    ok: outcome.status === "healthy",
+    status: outcome.status,
+    httpStatus: outcome.httpStatus,
+    errorMessage: outcome.error,
+    detail: outcome.issues.length ? { issues: outcome.issues } : null,
+    latencyMs: outcome.latencyMs,
+    attemptedAt: new Date(outcome.fetchedAt),
+  });
+
   if (!outcome.payload || !outcome.payloadHash) {
     return { ...outcome, stored: false, predictionsStored: 0, storeError: outcome.error };
   }
@@ -343,20 +360,55 @@ export async function fetchInfluencerFeedAndStore(cycleId: string): Promise<Stor
   const results: StoreResult[] = [];
   const roster = await loadRoster({ enabledOnly: false });
   const influencers = roster.filter((person) => isInfluencer(person));
+  const feedStatus = outcome.error?.includes("within")
+    ? "timeout"
+    : outcome.error
+      ? "error"
+      : "healthy";
+
+  await recordQueryAttempt({
+    source: "influencer_feed",
+    subjectId: "influencer-feed",
+    subjectName: "Influencer feed",
+    kind: "influencer",
+    cycleId,
+    url: outcome.url,
+    ok: !outcome.error && Boolean(outcome.feed),
+    status: feedStatus,
+    httpStatus: outcome.httpStatus,
+    errorMessage: outcome.error,
+    detail: outcome.issues.length ? { issues: outcome.issues } : null,
+    latencyMs: outcome.latencyMs,
+    attemptedAt: new Date(outcome.fetchedAt),
+  });
 
   if (!outcome.feed) {
     for (const person of influencers.filter((item) => item.enabled)) {
       await markIntegration(person.id, {
         lastFetchAt: new Date(outcome.fetchedAt),
-        lastStatus: outcome.error?.includes("within") ? "timeout" : "error",
+        lastStatus: feedStatus,
         lastError: outcome.error,
         lastLatencyMs: outcome.latencyMs,
+      });
+      await recordQueryAttempt({
+        source: "influencer_channel",
+        subjectId: person.id,
+        subjectName: person.name,
+        kind: "influencer",
+        cycleId,
+        url: outcome.url,
+        ok: false,
+        status: feedStatus,
+        httpStatus: outcome.httpStatus,
+        errorMessage: outcome.error,
+        latencyMs: outcome.latencyMs,
+        attemptedAt: new Date(outcome.fetchedAt),
       });
       results.push({
         ...outcome,
         studentId: person.id,
         url: outcome.url,
-        status: outcome.error?.includes("within") ? "timeout" : "error",
+        status: feedStatus,
         payload: null,
         payloadHash: null,
         stored: false,
@@ -381,6 +433,47 @@ export async function fetchInfluencerFeedAndStore(cycleId: string): Promise<Stor
     });
     seen.add(person.id);
 
+    const reported = item.error?.trim();
+    if (reported) {
+      await markIntegration(person.id, {
+        lastFetchAt: new Date(outcome.fetchedAt),
+        lastStatus: "error",
+        lastError: reported,
+        lastLatencyMs: outcome.latencyMs,
+      });
+      await recordQueryAttempt({
+        source: "influencer_channel",
+        subjectId: person.id,
+        subjectName: person.name,
+        kind: "influencer",
+        cycleId,
+        url: outcome.url,
+        ok: false,
+        status: "error",
+        httpStatus: outcome.httpStatus,
+        errorMessage: reported,
+        latencyMs: outcome.latencyMs,
+        attemptedAt: new Date(outcome.fetchedAt),
+      });
+      results.push({
+        studentId: person.id,
+        url: outcome.url,
+        status: "error",
+        httpStatus: outcome.httpStatus,
+        latencyMs: outcome.latencyMs,
+        fetchedAt: outcome.fetchedAt,
+        rawBody: item,
+        payload: null,
+        payloadHash: null,
+        issues: [],
+        error: reported,
+        stored: false,
+        predictionsStored: 0,
+        storeError: reported,
+      });
+      continue;
+    }
+
     const payload = influencerToStudentPayload(item);
     if (!payload) {
       await markIntegration(person.id, {
@@ -388,6 +481,20 @@ export async function fetchInfluencerFeedAndStore(cycleId: string): Promise<Stor
         lastStatus: "healthy",
         lastError: null,
         lastLatencyMs: outcome.latencyMs,
+      });
+      await recordQueryAttempt({
+        source: "influencer_channel",
+        subjectId: person.id,
+        subjectName: person.name,
+        kind: "influencer",
+        cycleId,
+        url: outcome.url,
+        ok: true,
+        status: "healthy",
+        httpStatus: outcome.httpStatus,
+        errorMessage: null,
+        latencyMs: outcome.latencyMs,
+        attemptedAt: new Date(outcome.fetchedAt),
       });
       results.push({
         studentId: person.id,
@@ -607,8 +714,12 @@ export async function resolveDuePredictions(asOf = new Date()): Promise<ResolveS
     );
 
   const summary: ResolveSummary = { checked: due.length, resolved: 0, hits: 0, failures: [] };
+  const studentRows = await client.select({ id: schema.students.id, name: schema.students.name }).from(schema.students);
+  const studentName = new Map(studentRows.map((row) => [row.id, row.name]));
+  const marketUrl = (ticker: string) => `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}`;
 
   for (const prediction of due) {
+    const subjectName = `${studentName.get(prediction.studentId) ?? prediction.studentId} · ${prediction.ticker}`;
     try {
       const [entry, exit] = await Promise.all([
         provider.getPrice(prediction.ticker, new Date(prediction.predictionDate)),
@@ -616,9 +727,25 @@ export async function resolveDuePredictions(asOf = new Date()): Promise<ResolveS
       ]);
 
       if (!entry || !exit) {
+        const reason = "Market data provider returned no price for one of the two dates";
         summary.failures.push({
           predictionId: prediction.id,
-          reason: "Market data provider returned no price for one of the two dates",
+          reason,
+        });
+        await recordQueryAttempt({
+          source: "market_price",
+          subjectId: prediction.id,
+          subjectName,
+          kind: "market",
+          ticker: prediction.ticker,
+          url: marketUrl(prediction.ticker),
+          ok: false,
+          status: "error",
+          errorMessage: reason,
+          detail: {
+            predictionDate: prediction.predictionDate,
+            resolutionDate: prediction.resolutionDate,
+          },
         });
         continue;
       }
@@ -652,10 +779,43 @@ export async function resolveDuePredictions(asOf = new Date()): Promise<ResolveS
 
       summary.resolved += 1;
       if (outcome.hitTarget) summary.hits += 1;
+      await recordQueryAttempt({
+        source: "market_price",
+        subjectId: prediction.id,
+        subjectName,
+        kind: "market",
+        ticker: prediction.ticker,
+        url: marketUrl(prediction.ticker),
+        ok: true,
+        status: "healthy",
+        errorMessage: null,
+        detail: {
+          predictionDate: prediction.predictionDate,
+          resolutionDate: prediction.resolutionDate,
+          entry,
+          exit,
+        },
+      });
     } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
       summary.failures.push({
         predictionId: prediction.id,
-        reason: error instanceof Error ? error.message : String(error),
+        reason,
+      });
+      await recordQueryAttempt({
+        source: "market_price",
+        subjectId: prediction.id,
+        subjectName,
+        kind: "market",
+        ticker: prediction.ticker,
+        url: marketUrl(prediction.ticker),
+        ok: false,
+        status: "error",
+        errorMessage: reason,
+        detail: {
+          predictionDate: prediction.predictionDate,
+          resolutionDate: prediction.resolutionDate,
+        },
       });
     }
   }

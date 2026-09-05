@@ -10,6 +10,7 @@ import {
   retryDelayMs,
 } from "@/lib/student-api/retry";
 import {
+  reportedQueryError,
   studentNamesMatch,
   summariseIssues,
   validateStudentPayload,
@@ -96,14 +97,15 @@ export async function fetchStudent(
       };
     }
 
-    if (!response.ok) {
+    const reported = reportedQueryError(body);
+    if (!response.ok || reported) {
       return {
         ...base,
         latencyMs,
         httpStatus: response.status,
         rawBody: body,
         status: "error",
-        error: `HTTP ${response.status} ${response.statusText}`.trim(),
+        error: reported ?? `HTTP ${response.status} ${response.statusText}`.trim(),
       };
     }
 

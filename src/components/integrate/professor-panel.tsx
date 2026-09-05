@@ -144,7 +144,7 @@ export function ProfessorPanel({ mockMode }: { mockMode: boolean }) {
     <Panel>
       <PanelHeader
         title="Professor — register endpoints"
-        description="Students do not log in here. They host GET /api/predictions; you paste the URL. Gated by ADMIN_TOKEN."
+        description="Students do not log in here. They host GET /api/predictions; you paste the URL. Gated by ADMIN_TOKEN. Query failures land on /errors."
       />
       <div className="space-y-4 px-4 py-4 sm:px-6">
         {mockMode ? (
@@ -153,6 +153,14 @@ export function ProfessorPanel({ mockMode }: { mockMode: boolean }) {
             the live deployment, then register real Vercel URLs.
           </p>
         ) : null}
+
+        <p className="text-xs text-fg-muted">
+          Every pull is logged. Open{" "}
+          <a href="/errors" className="text-accent-fg underline-offset-4 hover:underline">
+            Query errors
+          </a>{" "}
+          to see student, YouTube and Yahoo failures.
+        </p>
 
         <label className="block text-xs text-fg-muted">
           ADMIN_TOKEN

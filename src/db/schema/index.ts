@@ -244,6 +244,37 @@ export const influencerIngestState = pgTable("influencer_ingest_state", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * One row per query the professor platform makes: student endpoints,
+ * the influencer feed, and Yahoo prices when a pick is resolved.
+ * Successes stay so the Errors page can show that a Sunday pull ran;
+ * failures are what the professor acts on.
+ */
+export const queryAttempts = pgTable(
+  "query_attempts",
+  {
+    id: text("id").primaryKey(),
+    source: text("source").notNull(),
+    subjectId: text("subject_id").notNull(),
+    subjectName: text("subject_name").notNull(),
+    kind: text("kind").notNull(),
+    cycleId: text("cycle_id"),
+    ticker: text("ticker"),
+    url: text("url"),
+    ok: boolean("ok").notNull(),
+    status: text("status").notNull(),
+    httpStatus: integer("http_status"),
+    errorMessage: text("error_message"),
+    detail: jsonb("detail"),
+    latencyMs: integer("latency_ms"),
+    attemptedAt: timestamp("attempted_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("query_attempts_attempted_idx").on(table.attemptedAt),
+    index("query_attempts_source_ok_idx").on(table.source, table.ok),
+  ],
+);
+
 export const auditLogs = pgTable(
   "audit_logs",
   {

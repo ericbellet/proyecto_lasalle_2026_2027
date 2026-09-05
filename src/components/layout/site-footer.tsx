@@ -43,6 +43,11 @@ export function SiteFooter() {
               Integration
             </Link>
           </li>
+          <li>
+            <Link href="/errors" className="text-xs text-fg-muted transition-colors hover:text-fg">
+              Errors
+            </Link>
+          </li>
         </ul>
       </div>
     </footer>

@@ -89,6 +89,18 @@ export type ContractResult =
   | { ok: true; payload: StudentPayload }
   | { ok: false; issues: ContractIssue[] };
 
+/**
+ * Student and influencer endpoints report a failed upstream query this way.
+ * An `error` field means the pull did not succeed — even on HTTP 200.
+ */
+export function reportedQueryError(input: unknown): string | null {
+  if (!input || typeof input !== "object") return null;
+  const value = (input as { error?: unknown }).error;
+  if (typeof value !== "string") return null;
+  const message = value.trim();
+  return message.length > 0 ? message.slice(0, 2000) : null;
+}
+
 export function validateStudentPayload(input: unknown): ContractResult {
   const parsed = studentPayloadSchema.safeParse(input);
   if (parsed.success) return { ok: true, payload: parsed.data };
