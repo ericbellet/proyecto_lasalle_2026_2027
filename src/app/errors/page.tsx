@@ -21,8 +21,7 @@ export const metadata: Metadata = {
   description: "Every student, influencer and market-price query, and whether it failed.",
 };
 
-const SOURCES: Array<{ id: "all" | QuerySource; label: string }> = [
-  { id: "all", label: "All queries" },
+const SOURCES: Array<{ id: QuerySource; label: string }> = [
   { id: "student_endpoint", label: "Students" },
   { id: "influencer_feed", label: "Influencer feed" },
   { id: "influencer_channel", label: "YouTube" },
