@@ -48,6 +48,13 @@ function attemptId(): string {
   return `qa-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function toIso(value: Date | string | null | undefined): string | null {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toISOString();
+}
+
 /** Persist one query. Never throws — a logging failure must not abort Sunday. */
 export async function recordQueryAttempt(input: QueryAttemptInput): Promise<void> {
   if (env.mockMode || !env.databaseUrl) return;
@@ -113,7 +120,7 @@ export async function listQueryAttempts(filter: QueryAttemptFilter = {}): Promis
     errorMessage: row.errorMessage,
     detail: row.detail,
     latencyMs: row.latencyMs,
-    attemptedAt: row.attemptedAt.toISOString(),
+    attemptedAt: toIso(row.attemptedAt) ?? new Date().toISOString(),
   }));
 }
 
@@ -137,6 +144,6 @@ export async function queryAttemptSummary(): Promise<{
     total: totals?.total ?? 0,
     failed: totals?.failed ?? 0,
     failedLast24h: totals?.failedLast24h ?? 0,
-    lastAttemptAt: totals?.lastAttemptAt ? totals.lastAttemptAt.toISOString() : null,
+    lastAttemptAt: toIso(totals?.lastAttemptAt ?? null),
   };
 }
