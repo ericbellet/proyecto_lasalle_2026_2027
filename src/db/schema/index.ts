@@ -29,6 +29,7 @@ export const students = pgTable("students", {
   name: text("name").notNull(),
   handle: text("handle").notNull().unique(),
   avatarSeed: text("avatar_seed").notNull(),
+  kind: text("kind").notNull().default("student"),
   joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -237,6 +238,12 @@ export const weeklyWinners = pgTable("weekly_winners", {
  * Append-only trail. Every fetch, lock, resolution and manual correction lands
  * here, which is what makes a disputed grade answerable months later.
  */
+export const influencerIngestState = pgTable("influencer_ingest_state", {
+  id: text("id").primaryKey(),
+  payload: jsonb("payload").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const auditLogs = pgTable(
   "audit_logs",
   {

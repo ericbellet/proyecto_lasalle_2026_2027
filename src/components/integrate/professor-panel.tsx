@@ -10,6 +10,7 @@ type RosterRow = {
   id: string;
   name: string;
   handle: string;
+  kind?: "student" | "influencer";
   url: string;
   enabled: boolean;
   lastStatus: string;
@@ -216,7 +217,14 @@ export function ProfessorPanel({ mockMode }: { mockMode: boolean }) {
                 className="flex flex-col gap-1 rounded-md border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-medium text-fg">{student.name}</p>
+                  <p className="truncate text-xs font-medium text-fg">
+                    {student.name}
+                    {student.kind === "influencer" ? (
+                      <span className="ml-2 font-mono text-[10px] uppercase tracking-wider text-fg-subtle">
+                        influencer
+                      </span>
+                    ) : null}
+                  </p>
                   <p className="truncate font-mono text-[11px] text-fg-subtle">{student.url}</p>
                   {student.lastError ? (
                     <p className="mt-1 text-[11px] text-negative">{student.lastError}</p>

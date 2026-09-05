@@ -9,10 +9,12 @@ const dataset = mockDataset();
 
 describe("mock dataset", () => {
   it("contains sixteen students and ten stocks", () => {
-    expect(dataset.students).toHaveLength(16);
+    const students = dataset.students.filter((person) => person.kind !== "influencer");
+    expect(students).toHaveLength(16);
     expect(dataset.stocks).toHaveLength(10);
-    expect(dataset.students.map((s) => s.id)).toEqual(STUDENT_PROFILES.map((s) => s.id));
+    expect(students.map((s) => s.id)).toEqual(STUDENT_PROFILES.map((s) => s.id));
     expect(dataset.stocks.map((s) => s.ticker)).toEqual(STOCK_UNIVERSE.map((s) => s.ticker));
+    expect(dataset.students.some((person) => person.kind === "influencer")).toBe(true);
   });
 
   it("is deterministic across calls", () => {

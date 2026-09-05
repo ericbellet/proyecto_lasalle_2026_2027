@@ -50,6 +50,9 @@ export const env = {
   cronSecret: read("CRON_SECRET"),
   marketDataProvider: (read("MARKET_DATA_PROVIDER") || "mock") as "mock" | "yahoo",
   studentFetchTimeoutMs: Number(read("STUDENT_FETCH_TIMEOUT_MS") ?? 8000),
+  influencerFeedUrl:
+    read("INFLUENCER_FEED_URL") || "https://influencer-predictions.vercel.app/api/influencers",
+  influencerFetchTimeoutMs: Number(read("INFLUENCER_FETCH_TIMEOUT_MS") ?? 15000),
   noindex: flag(read("NEXT_PUBLIC_NOINDEX"), false),
 
   supabaseUrl: read("NEXT_PUBLIC_SUPABASE_URL")?.replace(/\/rest\/v1\/?$/, "") || null,

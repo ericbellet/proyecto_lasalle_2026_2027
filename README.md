@@ -87,6 +87,8 @@ Rules: max 12 picks (top 3 × 4 horizons), unique rank per horizon, `generated_a
 
 Full walkthrough: [docs/STUDENT_INTEGRATION.md](docs/STUDENT_INTEGRATION.md).
 
+Influencers are the exception. The platform fetches **one** feed (`INFLUENCER_FEED_URL`, `GET /api/influencers`) that returns N people and their picks, then lists them next to the class. Empty prediction lists are allowed — a week without a stock video is not invented.
+
 There is also a future push path at `POST /api/submissions`. The MVP prefers pull.
 
 ## How prediction cycles work

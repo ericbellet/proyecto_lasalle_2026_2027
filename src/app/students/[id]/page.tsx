@@ -75,6 +75,7 @@ export default async function StudentPage({
               {detail.student.handle} · joined {formatDate(detail.student.joinedAt)}
             </p>
             <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+              {detail.student.kind === "influencer" ? <Badge tone="cyan">influencer</Badge> : null}
               {entry?.modelVersion ? (
                 <>
                   <Badge tone="accent">{entry.modelVersion.version}</Badge>

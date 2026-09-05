@@ -70,6 +70,7 @@ export async function loadDatasetFromDb(): Promise<Dataset> {
       name: row.name,
       handle: row.handle,
       avatarSeed: row.avatarSeed,
+      kind: row.kind === "influencer" ? "influencer" : "student",
       joinedAt: row.joinedAt.toISOString(),
     })),
 

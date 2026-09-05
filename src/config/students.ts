@@ -10,6 +10,7 @@ export interface StudentConfig {
   id: string;
   name: string;
   handle: string;
+  kind?: "student" | "influencer";
   api: {
     baseUrl: string;
     predictions: string;

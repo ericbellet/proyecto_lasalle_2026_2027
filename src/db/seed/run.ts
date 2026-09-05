@@ -55,6 +55,7 @@ async function main() {
       name: student.name,
       handle: student.handle,
       avatarSeed: student.avatarSeed,
+      kind: student.kind,
       joinedAt: new Date(student.joinedAt),
     })),
   );

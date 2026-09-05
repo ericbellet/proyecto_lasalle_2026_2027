@@ -4,15 +4,20 @@ import { and, eq, isNull, lte, sql } from "drizzle-orm";
 
 import { db, schema } from "@/db";
 import { HORIZONS, POINTS_PER_HIT, type Horizon } from "@/config/challenge";
+import { INFLUENCERS, influencerFeedUrl, isInfluencer } from "@/config/influencers";
 import type { StudentConfig } from "@/config/students";
 import { predictionsUrl } from "@/config/students";
-import { findStudent, loadRoster } from "@/lib/admin/roster";
+import { stableHash } from "@/lib/mock/dataset";
+import { findStudent, loadRoster, slugFromStudentName, upsertStudentEndpoint } from "@/lib/admin/roster";
+import { fetchInfluencerFeed } from "@/lib/student-api/influencer-fetcher";
+import { influencerToStudentPayload } from "@/lib/validation/influencer-contract";
 import { calculateResolutionDate, cycleDeadlineAt, cycleIdFor, isoWeek, startOfIsoWeek, toIsoDate } from "@/lib/dates";
 import { env } from "@/lib/env";
 import { marketDataProvider } from "@/lib/market-data";
 import { computeStudentMetrics } from "@/lib/metrics";
 import { calculatePredictionOutcome } from "@/lib/predictions/outcome";
 import { fetchAllStudents, fetchStudentWithRetry, type FetchOutcome } from "@/lib/student-api/fetcher";
+import { studentNamesMatch } from "@/lib/validation/student-contract";
 import {
   assertSnapshotMutable,
   ImmutableSnapshotError,
@@ -278,18 +283,21 @@ export async function fetchAllAndStore(cycleId: string): Promise<StoreResult[]> 
   requireDatabase("Fetching all students");
 
   const enabled = await loadRoster();
+  const students = enabled.filter((person) => !isInfluencer(person));
   const results: StoreResult[] = [];
 
   // `fetchAllStudents` already retries and bounds concurrency on the network
   // side; the writes are then sequential so one slow transaction cannot exhaust
   // the pool. Prefetch outcomes are passed through so nobody is fetched twice.
-  const outcomes = await fetchAllStudents(enabled);
-  const byId = new Map(enabled.map((student) => [student.id, student]));
+  const outcomes = await fetchAllStudents(students);
+  const byId = new Map(students.map((student) => [student.id, student]));
   for (const outcome of outcomes) {
     const student = byId.get(outcome.studentId);
     if (!student) continue;
     results.push(await fetchAndStore(student, cycleId, outcome));
   }
+
+  results.push(...(await fetchInfluencerFeedAndStore(cycleId)));
 
   await audit("cycle.fetch_all", "prediction_cycle", cycleId, {
     attempted: enabled.length,
@@ -297,6 +305,150 @@ export async function fetchAllAndStore(cycleId: string): Promise<StoreResult[]> 
   });
 
   return results;
+}
+
+function configForInfluencer(name: string, handle?: string): StudentConfig {
+  const match =
+    INFLUENCERS.find((person) => studentNamesMatch(person.name, name)) ??
+    INFLUENCERS.find((person) => handle && person.handle === handle.replace(/^@/, ""));
+  if (match) return match;
+  const slug = slugFromStudentName(name);
+  let origin = "https://influencer-predictions.vercel.app";
+  try {
+    origin = new URL(influencerFeedUrl()).origin;
+  } catch {
+    // keep default
+  }
+  return {
+    id: `inf-${slug}`,
+    name,
+    handle: handle?.replace(/^@/, "") || slug,
+    kind: "influencer",
+    api: {
+      baseUrl: origin,
+      predictions: "/api/influencers",
+      health: "/api/health",
+    },
+    enabled: true,
+  };
+}
+
+/**
+ * One HTTPS call, N people. Empty prediction lists are a successful week
+ * without picks — we do not invent stocks and we do not keep them pending.
+ */
+export async function fetchInfluencerFeedAndStore(cycleId: string): Promise<StoreResult[]> {
+  requireDatabase("Fetching influencer feed");
+  const outcome = await fetchInfluencerFeed();
+  const results: StoreResult[] = [];
+  const roster = await loadRoster({ enabledOnly: false });
+  const influencers = roster.filter((person) => isInfluencer(person));
+
+  if (!outcome.feed) {
+    for (const person of influencers.filter((item) => item.enabled)) {
+      await markIntegration(person.id, {
+        lastFetchAt: new Date(outcome.fetchedAt),
+        lastStatus: outcome.error?.includes("within") ? "timeout" : "error",
+        lastError: outcome.error,
+        lastLatencyMs: outcome.latencyMs,
+      });
+      results.push({
+        ...outcome,
+        studentId: person.id,
+        url: outcome.url,
+        status: outcome.error?.includes("within") ? "timeout" : "error",
+        payload: null,
+        payloadHash: null,
+        stored: false,
+        predictionsStored: 0,
+        storeError: outcome.error,
+      });
+    }
+    return results;
+  }
+
+  const seen = new Set<string>();
+
+  for (const item of outcome.feed.influencers) {
+    const config = configForInfluencer(item.name, item.handle);
+    const person = await upsertStudentEndpoint({
+      id: config.id,
+      name: config.name,
+      handle: config.handle,
+      url: outcome.url,
+      enabled: true,
+      kind: "influencer",
+    });
+    seen.add(person.id);
+
+    const payload = influencerToStudentPayload(item);
+    if (!payload) {
+      await markIntegration(person.id, {
+        lastFetchAt: new Date(outcome.fetchedAt),
+        lastStatus: "healthy",
+        lastError: null,
+        lastLatencyMs: outcome.latencyMs,
+      });
+      results.push({
+        studentId: person.id,
+        url: outcome.url,
+        status: "healthy",
+        httpStatus: outcome.httpStatus,
+        latencyMs: outcome.latencyMs,
+        fetchedAt: outcome.fetchedAt,
+        rawBody: item,
+        payload: null,
+        payloadHash: null,
+        issues: [],
+        error: null,
+        stored: false,
+        predictionsStored: 0,
+        storeError: null,
+      });
+      continue;
+    }
+
+    const prefetched: FetchOutcome = {
+      studentId: person.id,
+      url: outcome.url,
+      status: "healthy",
+      httpStatus: outcome.httpStatus,
+      latencyMs: outcome.latencyMs,
+      fetchedAt: outcome.fetchedAt,
+      rawBody: item,
+      payload,
+      payloadHash: stableHash(JSON.stringify(item)),
+      issues: [],
+      error: null,
+    };
+    results.push(await fetchAndStore(person, cycleId, prefetched));
+  }
+
+  for (const person of influencers.filter((item) => item.enabled && !seen.has(item.id))) {
+    await markIntegration(person.id, {
+      lastFetchAt: new Date(outcome.fetchedAt),
+      lastStatus: "healthy",
+      lastError: "not present in this week's feed",
+      lastLatencyMs: outcome.latencyMs,
+    });
+  }
+
+  return results;
+}
+
+async function markIntegration(
+  studentId: string,
+  values: {
+    lastFetchAt: Date;
+    lastStatus: "healthy" | "error" | "timeout" | "invalid" | "unknown";
+    lastError: string | null;
+    lastLatencyMs: number;
+  },
+): Promise<void> {
+  await db()
+    .update(schema.studentIntegrations)
+    .set(values)
+    .where(eq(schema.studentIntegrations.studentId, studentId));
 }
 
 /**
@@ -315,9 +467,17 @@ export async function retryFailedStudents(cycleId?: string): Promise<{
   const pending = await pendingStudentIds(id);
   const results: StoreResult[] = [];
 
+  let influencerFeedDone = false;
   for (const studentId of pending) {
     const student = await findStudent(studentId);
     if (!student?.enabled) continue;
+    if (isInfluencer(student)) {
+      if (!influencerFeedDone) {
+        results.push(...(await fetchInfluencerFeedAndStore(id)));
+        influencerFeedDone = true;
+      }
+      continue;
+    }
     results.push(await fetchAndStore(student, id));
   }
 
@@ -344,7 +504,19 @@ async function pendingStudentIds(cycleId: string): Promise<string[]> {
   const lockedIds = new Set(
     snapshots.filter((row) => row.lockedAt != null).map((row) => row.studentId),
   );
-  return roster.filter((student) => student.enabled && !lockedIds.has(student.id)).map((student) => student.id);
+  const integrations = await client.select().from(schema.studentIntegrations);
+  const integrationById = new Map(integrations.map((row) => [row.studentId, row]));
+
+  return roster
+    .filter((student) => {
+      if (!student.enabled || lockedIds.has(student.id)) return false;
+      if (isInfluencer(student)) {
+        const integration = integrationById.get(student.id);
+        if (integration?.lastStatus === "healthy") return false;
+      }
+      return true;
+    })
+    .map((student) => student.id);
 }
 
 export async function getRosterStatus(cycleId?: string): Promise<{
@@ -354,6 +526,7 @@ export async function getRosterStatus(cycleId?: string): Promise<{
     id: string;
     name: string;
     handle: string;
+    kind: "student" | "influencer";
     url: string;
     enabled: boolean;
     lastStatus: string;
@@ -389,6 +562,7 @@ export async function getRosterStatus(cycleId?: string): Promise<{
         id: student.id,
         name: student.name,
         handle: student.handle,
+        kind: isInfluencer(student) ? "influencer" : "student",
         url: predictionsUrl(student),
         enabled: student.enabled,
         lastStatus: integration?.lastStatus ?? "unknown",

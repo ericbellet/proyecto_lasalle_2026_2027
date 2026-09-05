@@ -11,7 +11,8 @@ import {
   Stat,
 } from "@/components/ui/primitives";
 import { LEADERBOARD_CONFIG } from "@/config/leaderboard";
-import { getLeaderboard, getOverview } from "@/lib/data/queries";
+import { getLeaderboard, getOverview, getStudents } from "@/lib/data/queries";
+import type { LeaderboardEntry } from "@/lib/types";
 import { cn, pct, returnTone, signedPct } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -22,18 +23,57 @@ export const metadata: Metadata = {
 };
 
 export default async function StudentsPage() {
-  const [entries, overview] = await Promise.all([getLeaderboard(), getOverview()]);
+  const [entries, people, overview] = await Promise.all([
+    getLeaderboard(),
+    getStudents(),
+    getOverview(),
+  ]);
+  const byId = new Map(entries.map((entry) => [entry.student.id, entry]));
+  const cards: LeaderboardEntry[] = people.map((person) => {
+    const existing = byId.get(person.id);
+    if (existing) return existing;
+    return {
+      rank: entries.length + 1,
+      previousRank: null,
+      student: person,
+      modelVersion: null,
+      metrics: {
+        studentId: person.id,
+        totalPredictions: 0,
+        resolvedPredictions: 0,
+        activePredictions: 0,
+        hits: 0,
+        hitRate: 0,
+        averageReturn: 0,
+        medianReturn: 0,
+        bestReturn: 0,
+        worstReturn: 0,
+        averageAlpha: 0,
+        averageProbability: 0,
+        brierScore: 0,
+        calibrationError: 0,
+        consistency: 0,
+      },
+      score: 0,
+      components: {},
+      provisional: true,
+    };
+  });
 
   return (
     <div className="space-y-8">
       <SectionHeading
         eyebrow="Cohort"
-        title="Students"
-        description="Ranked by points: one per stock that reached +10% at the deadline."
+        title="Students & influencers"
+        description="Class endpoints and YouTube influencers, ranked by the same rule: one point per stock that reached +10% at the deadline."
       />
 
       <dl className="grid grid-cols-2 gap-2.5 lg:grid-cols-3">
-        <Stat label="Students" value={overview.students} hint={`${overview.totalCycles} cycles run`} />
+        <Stat
+          label="Participants"
+          value={people.length}
+          hint={`${overview.totalCycles} cycles run`}
+        />
         <Stat
           label="Ranked"
           value={entries.filter((entry) => !entry.provisional).length}
@@ -47,7 +87,7 @@ export default async function StudentsPage() {
       </dl>
 
       <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {entries.map((entry) => (
+        {cards.map((entry) => (
           <li key={entry.student.id}>
             <Link
               href={`/students/${entry.student.id}`}
@@ -58,6 +98,7 @@ export default async function StudentsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-semibold">{entry.student.name}</p>
+                    {entry.student.kind === "influencer" ? <Badge tone="cyan">influencer</Badge> : null}
                     <ArrowUpRight className="size-3.5 shrink-0 text-fg-subtle transition-colors group-hover:text-accent-fg" />
                   </div>
                   <p className="truncate font-mono text-[11px] text-fg-subtle">

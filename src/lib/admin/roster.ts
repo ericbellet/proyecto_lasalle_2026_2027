@@ -2,6 +2,7 @@ import "server-only";
 
 import { eq } from "drizzle-orm";
 
+import { INFLUENCERS, isInfluencer } from "@/config/influencers";
 import { STUDENTS, type StudentConfig } from "@/config/students";
 import { db, schema } from "@/db";
 import { parsePredictionsUrl, RosterError } from "@/lib/admin/endpoint-url";
@@ -16,6 +17,7 @@ export interface UpsertStudentInput {
   url: string;
   enabled?: boolean;
   apiKeyEnvVar?: string | null;
+  kind?: "student" | "influencer";
 }
 
 function toConfig(
@@ -26,6 +28,7 @@ function toConfig(
     id: student.id,
     name: student.name,
     handle: student.handle,
+    kind: student.kind === "influencer" ? "influencer" : "student",
     api: {
       baseUrl: integration.baseUrl,
       predictions: integration.predictionsEndpoint,
@@ -36,9 +39,18 @@ function toConfig(
   };
 }
 
+function mergeInfluencers(roster: StudentConfig[]): StudentConfig[] {
+  const ids = new Set(roster.map((person) => person.id));
+  const names = new Set(roster.map((person) => person.name.toLowerCase()));
+  const extra = INFLUENCERS.filter(
+    (person) => !ids.has(person.id) && !names.has(person.name.toLowerCase()),
+  );
+  return [...roster, ...extra];
+}
+
 export async function loadRoster(options?: { enabledOnly?: boolean }): Promise<StudentConfig[]> {
   if (!env.databaseUrl) {
-    const fallback = STUDENTS;
+    const fallback = mergeInfluencers(STUDENTS);
     return options?.enabledOnly === false ? fallback : fallback.filter((student) => student.enabled);
   }
 
@@ -55,17 +67,17 @@ export async function loadRoster(options?: { enabledOnly?: boolean }): Promise<S
     );
 
   if (rows.length === 0) {
-    const fallback = STUDENTS;
+    const fallback = mergeInfluencers(STUDENTS);
     return options?.enabledOnly === false ? fallback : fallback.filter((student) => student.enabled);
   }
 
-  const mapped = rows.map((row) => toConfig(row.student, row.integration));
+  const mapped = mergeInfluencers(rows.map((row) => toConfig(row.student, row.integration)));
   return options?.enabledOnly === false ? mapped : mapped.filter((student) => student.enabled);
 }
 
 export async function findStudent(id: string): Promise<StudentConfig | undefined> {
   if (!env.databaseUrl) {
-    return STUDENTS.find((student) => student.id === id);
+    return mergeInfluencers(STUDENTS).find((student) => student.id === id);
   }
 
   const client = db();
@@ -82,7 +94,7 @@ export async function findStudent(id: string): Promise<StudentConfig | undefined
     .where(eq(schema.students.id, id));
 
   if (rows[0]) return toConfig(rows[0].student, rows[0].integration);
-  return STUDENTS.find((student) => student.id === id);
+  return mergeInfluencers(STUDENTS).find((student) => student.id === id);
 }
 
 export function slugFromStudentName(name: string): string {
@@ -106,6 +118,7 @@ export async function upsertStudentEndpoint(input: UpsertStudentInput): Promise<
 
   const { baseUrl, predictions } = parsePredictionsUrl(input.url);
   const enabled = input.enabled ?? true;
+  const kind = input.kind ?? (isInfluencer({ id }) ? "influencer" : "student");
   const client = db();
 
   await client
@@ -115,10 +128,11 @@ export async function upsertStudentEndpoint(input: UpsertStudentInput): Promise<
       name,
       handle,
       avatarSeed: handle,
+      kind,
     })
     .onConflictDoUpdate({
       target: schema.students.id,
-      set: { name, handle, avatarSeed: handle },
+      set: { name, handle, avatarSeed: handle, kind },
     });
 
   await client
@@ -145,6 +159,7 @@ export async function upsertStudentEndpoint(input: UpsertStudentInput): Promise<
     id,
     name,
     handle,
+    kind,
     api: { baseUrl, predictions, apiKeyEnvVar: input.apiKeyEnvVar ?? undefined },
     enabled,
   };

@@ -68,6 +68,7 @@ export function LeaderboardTable({ entries }: { entries: LeaderboardEntry[] }) {
                   >
                     <Avatar name={entry.student.name} seed={entry.student.avatarSeed} size={28} />
                     <span className="truncate">{entry.student.name}</span>
+                    {entry.student.kind === "influencer" ? <Badge tone="cyan">influencer</Badge> : null}
                     {entry.provisional ? <Badge tone="warning">provisional</Badge> : null}
                   </Link>
                 </Td>
@@ -97,7 +98,10 @@ export function LeaderboardTable({ entries }: { entries: LeaderboardEntry[] }) {
                 <RankBadge rank={entry.rank} provisional={entry.provisional} />
                 <Avatar name={entry.student.name} seed={entry.student.avatarSeed} size={34} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{entry.student.name}</p>
+                  <p className="truncate text-sm font-medium">
+                    {entry.student.name}
+                    {entry.student.kind === "influencer" ? " · influencer" : ""}
+                  </p>
                   <p className="truncate text-[11px] text-fg-muted">
                     {entry.metrics.hits}/{entry.metrics.resolvedPredictions} hits
                     {entry.provisional ? " · provisional" : ""}

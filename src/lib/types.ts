@@ -4,6 +4,8 @@ import type { Horizon, ResearchArea } from "@/config/challenge";
 
 export type IntegrationStatus = "healthy" | "error" | "timeout" | "invalid" | "unknown";
 
+export type ParticipantKind = "student" | "influencer";
+
 export interface StudentIntegration {
   studentId: string;
   baseUrl: string;
@@ -24,6 +26,7 @@ export interface Student {
   handle: string;
   avatarSeed: string;
   joinedAt: string;
+  kind: ParticipantKind;
 }
 
 export interface ModelVersion {

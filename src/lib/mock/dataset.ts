@@ -125,9 +125,37 @@ function buildStudents(): Student[] {
     name: profile.name,
     handle: profile.handle,
     avatarSeed: profile.handle,
+    kind: "student" as const,
     joinedAt: `2026-01-1${(index % 5) + 2}T10:00:00.000Z`,
   }));
 }
+
+const MOCK_INFLUENCERS: Student[] = [
+  {
+    id: "inf-lapizarra-de-andres",
+    name: "La Pizarra de Andrés",
+    handle: "lapizarradeandres",
+    avatarSeed: "lapizarradeandres",
+    kind: "influencer",
+    joinedAt: "2026-09-06T08:00:00.000Z",
+  },
+  {
+    id: "inf-arte-de-invertir",
+    name: "Arte de Invertir",
+    handle: "artedeinvertir",
+    avatarSeed: "artedeinvertir",
+    kind: "influencer",
+    joinedAt: "2026-09-06T08:00:00.000Z",
+  },
+  {
+    id: "inf-graham-stephan",
+    name: "Graham Stephan",
+    handle: "grahamstephan",
+    avatarSeed: "grahamstephan",
+    kind: "influencer",
+    joinedAt: "2026-09-06T08:00:00.000Z",
+  },
+];
 
 function buildModelVersions(cycles: PredictionCycle[]): ModelVersion[] {
   const versions: ModelVersion[] = [];
@@ -532,7 +560,7 @@ export function generateMockDataset(options?: {
     toIsoDate(nearestMarketDay(parseIsoDate(cycle.deadlineAt.slice(0, 10)), -1)),
   );
   const features = buildFeatureRows(series, cycleDates, seed);
-  const students = buildStudents();
+  const students = [...buildStudents(), ...MOCK_INFLUENCERS];
   const modelVersions = buildModelVersions(cycles);
   const integrations = buildIntegrations(new Rng(`${seed}:integrations`), cycles);
   const { predictions, results, snapshots } = buildPredictions(
