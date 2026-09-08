@@ -68,13 +68,34 @@ export default async function ErrorsPage({
     <div className="space-y-8">
       <SectionHeading
         eyebrow="Operations"
-        title="Query errors"
-        description="Each time the platform asks a student endpoint, the influencer feed, or Yahoo for a real price, the result is stored here. Empty influencer weeks are not errors."
+        title="Query health"
+        description="Current service health plus an immutable audit history of every student, influencer and market-price query. Empty influencer weeks are successful runs with zero picks."
       />
+
+      <Panel
+        className={cn(
+          "flex items-center justify-between gap-4 px-4 py-3.5 sm:px-6",
+          summary.failedLast24h === 0 ? "border-positive/25 bg-positive-soft/40" : "border-negative/25 bg-negative-soft/40",
+        )}
+      >
+        <div>
+          <p className="text-sm font-semibold">
+            {summary.failedLast24h === 0 ? "All systems healthy" : "Recent failures need attention"}
+          </p>
+          <p className="mt-1 text-xs text-fg-muted">
+            {summary.failedLast24h === 0
+              ? "No failed query in the last 24 hours. Older failures remain below as audit history."
+              : `${summary.failedLast24h} failed ${summary.failedLast24h === 1 ? "query" : "queries"} in the last 24 hours.`}
+          </p>
+        </div>
+        <Badge tone={summary.failedLast24h === 0 ? "positive" : "negative"}>
+          {summary.failedLast24h === 0 ? "Healthy" : "Attention"}
+        </Badge>
+      </Panel>
 
       <dl className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         <Stat label="Logged" value={summary.total} hint={mock ? "mock sample" : "all attempts"} />
-        <Stat label="Failed" value={summary.failed} hint="student + YouTube + prices" />
+        <Stat label="Historical failures" value={summary.failed} hint="retained for audit" />
         <Stat label="Failed last 24h" value={summary.failedLast24h} hint="needs a retry" />
         <Stat
           label="Last query"
@@ -85,7 +106,7 @@ export default async function ErrorsPage({
 
       <div className="flex flex-wrap gap-2">
         <FilterLink href={href({ view: failedOnly ? undefined : "all", source })} active={failedOnly}>
-          Failures
+          Failure history
         </FilterLink>
         <FilterLink href={href({ view: "all", source })} active={!failedOnly}>
           All queries

@@ -504,6 +504,40 @@ export async function fetchInfluencerFeedAndStore(cycleId: string): Promise<Stor
         latencyMs: outcome.latencyMs,
         attemptedAt: new Date(outcome.fetchedAt),
       });
+      const snapshotId = `snap-${cycleId}-${person.id}`;
+      const existing = await db()
+        .select({ lockedAt: schema.predictionSnapshots.lockedAt })
+        .from(schema.predictionSnapshots)
+        .where(
+          and(
+            eq(schema.predictionSnapshots.studentId, person.id),
+            eq(schema.predictionSnapshots.cycleId, cycleId),
+          ),
+        );
+      assertSnapshotMutable(existing[0]?.lockedAt ?? null, person.id, cycleId);
+      await db().transaction(async (tx) => {
+        await tx
+          .insert(schema.predictionSnapshots)
+          .values({
+            id: snapshotId,
+            studentId: person.id,
+            cycleId,
+            modelVersionId: null,
+            rawPayload: item as never,
+            payloadHash: stableHash(JSON.stringify(item)),
+            fetchedAt: new Date(outcome.fetchedAt),
+          })
+          .onConflictDoUpdate({
+            target: [schema.predictionSnapshots.studentId, schema.predictionSnapshots.cycleId],
+            set: {
+              rawPayload: item as never,
+              payloadHash: stableHash(JSON.stringify(item)),
+              fetchedAt: new Date(outcome.fetchedAt),
+              modelVersionId: null,
+            },
+          });
+        await tx.delete(schema.predictions).where(eq(schema.predictions.snapshotId, snapshotId));
+      });
       results.push({
         studentId: person.id,
         url: outcome.url,
@@ -516,7 +550,7 @@ export async function fetchInfluencerFeedAndStore(cycleId: string): Promise<Stor
         payloadHash: null,
         issues: [],
         error: null,
-        stored: false,
+        stored: true,
         predictionsStored: 0,
         storeError: null,
       });
@@ -619,16 +653,9 @@ async function pendingStudentIds(cycleId: string): Promise<string[]> {
   const lockedIds = new Set(
     snapshots.filter((row) => row.lockedAt != null).map((row) => row.studentId),
   );
-  const integrations = await client.select().from(schema.studentIntegrations);
-  const integrationById = new Map(integrations.map((row) => [row.studentId, row]));
-
   return roster
     .filter((student) => {
       if (!student.enabled || lockedIds.has(student.id)) return false;
-      if (isInfluencer(student)) {
-        const integration = integrationById.get(student.id);
-        if (integration?.lastStatus === "healthy") return false;
-      }
       return true;
     })
     .map((student) => student.id);
