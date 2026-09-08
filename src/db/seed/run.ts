@@ -148,6 +148,7 @@ async function main() {
       targetPrice: prediction.targetPrice,
       investmentThesis: prediction.investmentThesis,
       risks: prediction.risks,
+      sourceUrl: prediction.sourceUrl ?? null,
       predictionDate: prediction.predictionDate,
       resolutionDate: prediction.resolutionDate,
       status: prediction.status,

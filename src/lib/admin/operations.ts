@@ -284,6 +284,7 @@ export async function fetchAndStore(
         targetPrice: item.target_price ?? null,
         investmentThesis: item.investment_thesis ?? null,
         risks: item.risks ?? null,
+        sourceUrl: item.source_url ?? null,
         predictionDate,
         resolutionDate: toIsoDate(calculateResolutionDate(predictionDate, item.horizon as Horizon)),
         status: "active" as const,

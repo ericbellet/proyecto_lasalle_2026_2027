@@ -69,7 +69,8 @@ function joinResults(
   const snapshotById = new Map(snapshots.map((snapshot) => [snapshot.id, snapshot]));
   return predictions.map((prediction) => ({
     ...prediction,
-    sourceUrl: sourceUrlFromSnapshot(snapshotById.get(prediction.snapshotId), prediction),
+    sourceUrl:
+      prediction.sourceUrl ?? sourceUrlFromSnapshot(snapshotById.get(prediction.snapshotId), prediction),
     result: byId.get(prediction.id) ?? null,
   }));
 }

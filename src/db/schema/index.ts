@@ -123,6 +123,8 @@ export const predictions = pgTable(
     targetPrice: doublePrecision("target_price"),
     investmentThesis: text("investment_thesis"),
     risks: text("risks"),
+    /** Evidence supplied by the source system, e.g. an influencer's YouTube video. */
+    sourceUrl: text("source_url"),
     predictionDate: date("prediction_date").notNull(),
     resolutionDate: date("resolution_date").notNull(),
     status: text("status").notNull().default("active"),

@@ -134,6 +134,7 @@ export async function loadDatasetFromDb(): Promise<Dataset> {
       targetPrice: row.targetPrice,
       investmentThesis: row.investmentThesis,
       risks: row.risks,
+      sourceUrl: row.sourceUrl,
       predictionDate: row.predictionDate,
       resolutionDate: row.resolutionDate,
       status: row.status as PredictionStatus,
