@@ -84,6 +84,8 @@ export interface Prediction {
   targetPrice: number | null;
   investmentThesis: string | null;
   risks: string | null;
+  /** Optional evidence URL supplied with the immutable snapshot. */
+  sourceUrl?: string | null;
   predictionDate: string;
   resolutionDate: string;
   status: PredictionStatus;

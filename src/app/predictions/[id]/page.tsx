@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Check, Lock, X } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, Lock, X } from "lucide-react";
 
 import { PricePathChart } from "@/components/charts/price-path-chart";
 import {
@@ -66,6 +66,16 @@ export default async function PredictionPage({ params }: { params: Promise<{ id:
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Badge tone="neutral">{cycle?.id ?? prediction.cycleId}</Badge>
           <Badge tone="accent">{prediction.horizon}</Badge>
+          {prediction.sourceUrl ? (
+            <a
+              href={prediction.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-full border border-border bg-bg-elevated px-2.5 py-1 text-xs font-medium text-accent-fg transition-colors hover:border-accent-fg/40"
+            >
+              Watch source <ExternalLink className="size-3" />
+            </a>
+          ) : null}
           {result ? (
             result.hitTarget ? (
               <Badge tone="positive">Hit · +1 pt</Badge>

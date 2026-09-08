@@ -21,6 +21,7 @@ export const predictionItemSchema = z.object({
   ticker: tickerSchema,
   horizon: z.enum(HORIZONS),
   rank: z.number().int().min(1).max(PICKS_PER_HORIZON),
+  source_url: z.string().url().max(500).optional(),
   target_price: z.number().positive().nullish(),
   investment_thesis: z.string().max(2000).nullish(),
   risks: z.string().max(2000).nullish(),

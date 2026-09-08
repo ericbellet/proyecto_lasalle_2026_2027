@@ -12,7 +12,12 @@ const feed = {
       name: "La Pizarra de Andrés",
       handle: "lapizarradeandres",
       generated_at: "2026-09-06T10:00:00Z",
-      predictions: [{ ticker: "AAPL", horizon: "3M" as const, rank: 1 }],
+      predictions: [{
+        ticker: "AAPL",
+        horizon: "3M" as const,
+        rank: 1,
+        source_url: "https://www.youtube.com/watch?v=abcdefghijk",
+      }],
     },
     {
       name: "Arte de Invertir",
@@ -36,6 +41,7 @@ describe("validateInfluencerFeed", () => {
     const payload = influencerToStudentPayload(feed.influencers[0]!);
     expect(payload?.student).toBe("La Pizarra de Andrés");
     expect(payload?.predictions[0]?.ticker).toBe("AAPL");
+    expect(payload?.predictions[0]?.source_url).toContain("youtube.com/watch");
   });
 
   it("does not invent a student payload when the video had no picks", () => {

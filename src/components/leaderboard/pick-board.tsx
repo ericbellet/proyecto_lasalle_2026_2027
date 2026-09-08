@@ -19,6 +19,7 @@ export type SlimPickRow = {
   actual: number | null;
   points: number | null;
   status: "scheduled" | "scoring" | "hit" | "miss";
+  sourceUrl: string | null;
 };
 
 /**
@@ -41,7 +42,7 @@ export function PickBoard({ rows }: { rows: SlimPickRow[] }) {
   return (
     <div>
       <div className="scroll-x">
-        <table className="w-full min-w-[680px] border-collapse text-left text-sm">
+        <table className="w-full min-w-[760px] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-border">
               <Th>Student</Th>
@@ -49,6 +50,7 @@ export function PickBoard({ rows }: { rows: SlimPickRow[] }) {
               <Th>Horizon</Th>
               <Th>Deadline</Th>
               <Th>Status</Th>
+              <Th>Source</Th>
               <Th align="right">Actual</Th>
               <Th align="right">Pts</Th>
             </tr>
@@ -74,6 +76,21 @@ export function PickBoard({ rows }: { rows: SlimPickRow[] }) {
                   </Td>
                   <Td>
                     <PickStatus status={row.status} />
+                  </Td>
+                  <Td>
+                    {row.sourceUrl ? (
+                      <a
+                        href={row.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="whitespace-nowrap text-xs font-medium text-accent-fg hover:underline"
+                        aria-label={`Watch the source video for ${row.studentName}'s ${row.ticker} pick`}
+                      >
+                        YouTube ↗
+                      </a>
+                    ) : (
+                      <span className="text-fg-subtle">—</span>
+                    )}
                   </Td>
                   <Td align="right" className={cn("tnum", row.actual !== null ? returnTone(row.actual) : "text-fg-subtle")}>
                     <Link href={`/predictions/${row.id}`} className="hover:underline">

@@ -104,6 +104,7 @@ export default async function LeaderboardPage({
             deadline: row.prediction.resolutionDate,
             actual: row.prediction.result?.realizedReturn ?? null,
             points: row.points,
+            sourceUrl: row.sourceUrl,
             status:
               row.prediction.result != null
                 ? row.points && row.points > 0

@@ -63,16 +63,48 @@ export interface LeaderboardFilters {
 function joinResults(
   predictions: Prediction[],
   results: PredictionResult[],
+  snapshots: PredictionSnapshot[],
 ): ResolvedPrediction[] {
   const byId = new Map(results.map((result) => [result.predictionId, result]));
+  const snapshotById = new Map(snapshots.map((snapshot) => [snapshot.id, snapshot]));
   return predictions.map((prediction) => ({
     ...prediction,
+    sourceUrl: sourceUrlFromSnapshot(snapshotById.get(prediction.snapshotId), prediction),
     result: byId.get(prediction.id) ?? null,
   }));
 }
 
 export const allPredictions = (dataset: Dataset): ResolvedPrediction[] =>
-  joinResults(dataset.predictions, dataset.results);
+  joinResults(dataset.predictions, dataset.results, dataset.snapshots);
+
+function sourceUrlFromSnapshot(
+  snapshot: PredictionSnapshot | undefined,
+  prediction: Prediction,
+): string | null {
+  if (!snapshot || typeof snapshot.rawPayload !== "object" || snapshot.rawPayload === null) return null;
+  const raw = snapshot.rawPayload as { predictions?: unknown };
+  if (!Array.isArray(raw.predictions)) return null;
+
+  const match = raw.predictions.find((item) => {
+    if (typeof item !== "object" || item === null) return false;
+    const candidate = item as Record<string, unknown>;
+    return (
+      candidate.ticker === prediction.ticker &&
+      candidate.horizon === prediction.horizon &&
+      candidate.rank === prediction.rank
+    );
+  });
+  if (typeof match !== "object" || match === null) return null;
+  const value = (match as Record<string, unknown>).source_url;
+  if (typeof value !== "string") return null;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Cycle ids selected by a leaderboard window, newest-last. */
 export function cyclesInWindow(
@@ -278,6 +310,7 @@ export interface PickBoardRow {
   student: Student;
   cycle: PredictionCycle;
   points: number | null;
+  sourceUrl: string | null;
 }
 
 /**
@@ -302,6 +335,7 @@ export async function getPickBoard(filters: LeaderboardFilters = {}): Promise<Pi
         student,
         cycle,
         points: pointsForPick(prediction),
+        sourceUrl: prediction.sourceUrl ?? null,
       } satisfies PickBoardRow;
     })
     .filter((row): row is PickBoardRow => row !== null)
