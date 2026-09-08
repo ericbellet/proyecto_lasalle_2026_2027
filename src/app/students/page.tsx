@@ -59,6 +59,8 @@ export default async function StudentsPage() {
       provisional: true,
     };
   });
+  const students = cards.filter((entry) => entry.student.kind !== "influencer");
+  const influencers = cards.filter((entry) => entry.student.kind === "influencer");
 
   return (
     <div className="space-y-8">
@@ -86,8 +88,49 @@ export default async function StudentsPage() {
         />
       </dl>
 
+      <ParticipantSection
+        id="students"
+        title="Students"
+        description="Models submitted by the class through their own prediction APIs."
+        entries={students}
+      />
+
+      <ParticipantSection
+        id="influencers"
+        title="Influencers"
+        description="Public investing voices evaluated under the same deadlines and scoring rule."
+        entries={influencers}
+      />
+
+      <Panel className="px-4 py-3.5 sm:px-6">
+        <p className="text-[11px] leading-relaxed text-fg-subtle">
+          Ranking is recomputed on every request from the immutable snapshots — nothing here is
+          cached from a previous week, and no student can change a past prediction.
+        </p>
+      </Panel>
+    </div>
+  );
+}
+
+function ParticipantSection({
+  id,
+  title,
+  description,
+  entries,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  entries: LeaderboardEntry[];
+}) {
+  return (
+    <section id={id} className="scroll-mt-32 space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        <p className="mt-1 text-xs text-fg-muted">{description}</p>
+      </div>
       <ul className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {cards.map((entry) => (
+        {entries.map((entry) => (
           <li key={entry.student.id}>
             <Link
               href={`/students/${entry.student.id}`}
@@ -143,14 +186,7 @@ export default async function StudentsPage() {
           </li>
         ))}
       </ul>
-
-      <Panel className="px-4 py-3.5 sm:px-6">
-        <p className="text-[11px] leading-relaxed text-fg-subtle">
-          Ranking is recomputed on every request from the immutable snapshots — nothing here is
-          cached from a previous week, and no student can change a past prediction.
-        </p>
-      </Panel>
-    </div>
+    </section>
   );
 }
 
