@@ -15,10 +15,9 @@ const METRIC_HELP = {
 } as const;
 
 /**
- * Compact student ranking by championship points.
- *
- * The pick-by-pick board is the main table; this strip answers "who is ahead"
- * without bringing models or Brier back onto the public ranking.
+ * Student ranking by championship points. It remains visible during the
+ * provisional opening weeks so the leaderboard never collapses into a raw
+ * list of picks.
  */
 export function LeaderboardTable({ entries }: { entries: LeaderboardEntry[] }) {
   if (entries.length === 0) {
@@ -118,9 +117,10 @@ export function LeaderboardTable({ entries }: { entries: LeaderboardEntry[] }) {
       </ul>
 
       <p className="border-t border-border px-4 py-3 text-[11px] leading-relaxed text-fg-subtle sm:px-6">
-        Students with fewer than {LEADERBOARD_CONFIG.minResolvedForRanking} resolved predictions are
-        marked provisional and listed after the ranked cohort. Sample size is always shown so a
-        single lucky call is never mistaken for a record.
+        Fewer than {LEADERBOARD_CONFIG.minResolvedForRanking} resolved predictions means a
+        provisional record: points are real and visible, but the student cannot take an official
+        podium place yet. Sample size is always shown so a single lucky call is never mistaken for
+        a season record.
       </p>
     </>
   );

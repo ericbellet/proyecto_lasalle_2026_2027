@@ -232,7 +232,15 @@ export async function fetchAndStore(
   }
 
   const snapshotId = `snap-${cycleId}-${student.id}`;
-  const predictionDate = toIsoDate(new Date());
+  const [cycle] = await client
+    .select({ deadlineAt: schema.predictionCycles.deadlineAt })
+    .from(schema.predictionCycles)
+    .where(eq(schema.predictionCycles.id, cycleId));
+  if (!cycle) throw new Error(`Cycle ${cycleId} does not exist`);
+
+  // A retry may happen after Sunday. The official prediction date is the
+  // cycle close, not the wall-clock time of the successful retry.
+  const predictionDate = toIsoDate(cycle.deadlineAt);
   const payload = outcome.payload;
 
   await client.transaction(async (tx) => {
@@ -692,7 +700,7 @@ export interface ResolveSummary {
 }
 
 /**
- * Prices every prediction whose resolution date has passed.
+ * Prices every prediction whose Sunday championship deadline has arrived.
  *
  * A hit is the *closing* return reaching the target, not the intraday high: the
  * students are predicting a holdable outcome, and a wick through the target that
@@ -931,8 +939,8 @@ export interface NightlyJobResult {
  * Weekly Sunday job (`59 21 * * 0` = 21:59 UTC = 23:59 Europe/Madrid in CEST).
  *
  * Always:
- *   1. Resolve every pick whose `resolutionDate` is today or earlier (1W, 1M,
- *      3M and 6M). Longer horizons score on the first Sunday after they mature.
+ *   1. Resolve every pick whose Sunday `resolutionDate` is today or earlier
+ *      (1W, 1M, 3M and 6M).
  *   2. Open the week's cycle, pull every student endpoint (with retries), store
  *      valid snapshots, and lock the successes. Failures stay unlocked so
  *      `/api/admin/retry-failed` can fill them in without touching the others.

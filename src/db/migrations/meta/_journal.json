@@ -29,6 +29,13 @@
       "when": 1757099000000,
       "tag": "0003_query_attempts",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788872400000,
+      "tag": "0004_sunday_deadlines",
+      "breakpoints": true
     }
   ]
 }

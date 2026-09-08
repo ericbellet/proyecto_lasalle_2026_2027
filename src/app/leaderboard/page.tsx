@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 
 import { PickBoard } from "@/components/leaderboard/pick-board";
 import { PickFilters } from "@/components/leaderboard/pick-filters";
+import { LeaderboardTable } from "@/components/leaderboard/leaderboard-table";
 import { Podium } from "@/components/leaderboard/podium";
-import { LinkButton, Panel, SectionHeading } from "@/components/ui/primitives";
+import { LinkButton, Panel, PanelHeader, SectionHeading } from "@/components/ui/primitives";
 import { PICKS_PER_HORIZON, TARGET_RETURN } from "@/config/challenge";
 import {
   getLeaderboard,
@@ -47,6 +48,7 @@ export default async function LeaderboardPage({
   const options = await getPickFilterOptions();
 
   const ranked = entries.filter((entry) => !entry.provisional);
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="space-y-8">
@@ -67,6 +69,18 @@ export default async function LeaderboardPage({
       </div>
 
       <Panel className="overflow-hidden">
+        <PanelHeader
+          title="Season standings"
+          description="Championship points across every resolved Sunday. Provisional records stay visible while their sample grows."
+        />
+        <LeaderboardTable entries={entries} />
+      </Panel>
+
+      <Panel className="overflow-hidden">
+        <PanelHeader
+          title="Picks & results"
+          description="Every deadline is a Sunday. The result uses the latest market close available before that weekly scoring run."
+        />
         <div className="border-b border-border px-4 py-4 sm:px-6">
           <PickFilters
             students={options.students}
@@ -90,6 +104,14 @@ export default async function LeaderboardPage({
             deadline: row.prediction.resolutionDate,
             actual: row.prediction.result?.realizedReturn ?? null,
             points: row.points,
+            status:
+              row.prediction.result != null
+                ? row.points && row.points > 0
+                  ? "hit"
+                  : "miss"
+                : row.prediction.resolutionDate <= today
+                  ? "scoring"
+                  : "scheduled",
           }))}
         />
       </Panel>

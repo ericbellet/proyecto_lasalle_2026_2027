@@ -12,10 +12,10 @@ export const maxDuration = 120;
  * Schedule in vercel.json: `59 21 * * 0` — Sunday 21:59 UTC, which is
  * 23:59 Europe/Madrid during CEST (minute precision; 23:59:59 is not possible).
  *
- * Each run resolves every pick whose deadline has passed (1W / 1M / 3M / 6M —
- * longer horizons score on the first Sunday after they mature) and then pulls
- * + locks the current week's student APIs. Failed endpoints are retried a few
- * times; leftovers stay unlocked for POST /api/admin/retry-failed.
+ * Each run resolves every pick whose Sunday deadline has arrived (1W / 1M /
+ * 3M / 6M) and then pulls + locks the current week's student APIs. Failed
+ * endpoints are retried a few times; leftovers stay unlocked for
+ * POST /api/admin/retry-failed.
  */
 async function handle(request: Request): Promise<Response> {
   const auth = authorise(request);

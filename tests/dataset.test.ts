@@ -61,9 +61,9 @@ describe("mock dataset", () => {
       ]),
     );
     expect(byHorizon["1W"]).toEqual(["2026-08-30"]);
-    expect(byHorizon["1M"]).toEqual(["2026-09-22"]);
-    expect(byHorizon["3M"]).toEqual(["2026-11-23"]);
-    expect(byHorizon["6M"]).toEqual(["2027-02-22"]);
+    expect(byHorizon["1M"]).toEqual(["2026-09-20"]);
+    expect(byHorizon["3M"]).toEqual(["2026-11-22"]);
+    expect(byHorizon["6M"]).toEqual(["2027-02-21"]);
   });
 
   it("never overwrites an older model generation", () => {

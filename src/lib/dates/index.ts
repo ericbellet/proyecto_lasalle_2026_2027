@@ -71,16 +71,17 @@ export function nearestMarketDay(date: Date, direction: 1 | -1 = 1): Date {
 }
 
 /**
- * When a prediction made on `predictionDate` becomes checkable.
+ * When a prediction becomes checkable in the Sunday-to-Sunday championship.
  *
- * The MVP projects the horizon in calendar days and then snaps forward to the
- * next open session, so a 1W call made on a Monday resolves the following
- * Monday — or Tuesday when that Monday is a holiday.
+ * A snapshot belongs to the Sunday closing its ISO week. Anchoring here makes
+ * retries and manual imports deterministic too: a payload fetched on Monday
+ * cannot accidentally create Monday/Tuesday deadlines. Resolution uses the
+ * latest market close on or before that Sunday (normally Friday).
  */
 export function calculateResolutionDate(predictionDate: Date | string, horizon: Horizon): Date {
   const start = typeof predictionDate === "string" ? parseIsoDate(predictionDate) : predictionDate;
-  const projected = addDays(start, HORIZON_CALENDAR_DAYS[horizon]);
-  return nearestMarketDay(projected, 1);
+  const cycleSunday = addDays(startOfIsoWeek(start), 6);
+  return addDays(cycleSunday, HORIZON_CALENDAR_DAYS[horizon]);
 }
 
 /** Number of open sessions in `[from, to)`. Used for annualising volatility. */

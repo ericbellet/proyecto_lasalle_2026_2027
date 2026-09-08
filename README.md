@@ -95,7 +95,7 @@ There is also a future push path at `POST /api/submissions`. The MVP prefers pul
 
 Cycles are ISO weeks (`2026-W01`, `2026-W02`, …). Every **Sunday at 23:59 Europe/Madrid** (21:59 UTC in CEST; Vercel Cron `59 21 * * 0`) the platform:
 
-1. Resolves every pick whose `resolutionDate` has already passed (1W, 1M, 3M, 6M). Longer horizons are scored the first Sunday after they mature.
+1. Resolves every pick whose Sunday `resolutionDate` has arrived (1W, 1M, 3M, 6M), using the latest market close available on or before that Sunday.
 2. Fetches every enabled student endpoint (3 retries with backoff on timeouts / HTTP errors)
 3. Validates the payload with Zod
 4. Stores the raw JSON as a snapshot
@@ -131,7 +131,7 @@ Students with fewer than 12 resolved predictions appear as **provisional** and d
 
 ## How results are resolved
 
-`calculateResolutionDate()` projects the horizon in calendar days and snaps forward to the next market session. The Sunday job then scores every pick whose date has already passed — so a 1M pick that matures on a Wednesday is resolved the following Sunday.
+`calculateResolutionDate()` anchors every snapshot to its cycle-closing Sunday. Horizons then close 1, 4, 13 or 26 Sundays later. The weekly job uses the latest market close available on or before that Sunday (normally Friday), so the date shown in the UI is the same event that publishes the points.
 
 When that date arrives, `MockMarketDataProvider` or `YahooFinanceProvider` supplies the two closes. The official outcome is close-to-close, not the intraday high.
 

@@ -8,10 +8,16 @@
 export const HORIZONS = ["1W", "1M", "3M", "6M"] as const;
 export type Horizon = (typeof HORIZONS)[number];
 
-/** Calendar days used to project a prediction's resolution date. */
+/**
+ * Calendar days between Sunday championship closes.
+ *
+ * Every horizon lands on a Sunday so the displayed deadline and the weekly
+ * scoring job are the same event. "1M" is four championship weeks; the longer
+ * horizons use the conventional 13- and 26-week equivalents.
+ */
 export const HORIZON_CALENDAR_DAYS: Record<Horizon, number> = {
   "1W": 7,
-  "1M": 30,
+  "1M": 28,
   "3M": 91,
   "6M": 182,
 };
@@ -20,9 +26,8 @@ export const HORIZON_CALENDAR_DAYS: Record<Horizon, number> = {
  * Weekly job instant. Vercel Cron is UTC with minute precision (no seconds):
  * 23:59 Europe/Madrid in CEST (UTC+2) is 21:59 UTC → `59 21 * * 0`.
  *
- * The job is weekly, not nightly. 1M / 3M / 6M picks are scored the first
- * Sunday after their calendar `resolutionDate` has passed — the same run
- * checks every due pick, not only 1W.
+ * The job is weekly, not nightly. Every resolution date is a Sunday and the
+ * same run checks every due horizon before it locks the new weekly snapshot.
  */
 export const WEEKLY_LOCK = {
   utcDay: 0,
